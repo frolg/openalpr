@@ -3,6 +3,11 @@ project(src)
 set(CMAKE_BUILD_TYPE RelWithDebugInfo)
 #set(CMAKE_BUILD_TYPE Debug)
 
+SET(OpenCV_DIR "/home/srv/work/opencv/release/lib")
+
+SET(Tesseract_DIR "/home/srv/tesseract")
+
+
 cmake_minimum_required (VERSION 2.6)
 
 # Set the OpenALPR version in cmake, and also add it as a DEFINE for the code to access

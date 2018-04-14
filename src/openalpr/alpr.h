@@ -104,6 +104,8 @@ namespace alpr
       // When region detection is enabled, this returns the region.  Region detection is experimental
       int regionConfidence;
       std::string region;
+
+      std::vector<std::string> thresholdOcrLines;
   };
 
   class AlprResults

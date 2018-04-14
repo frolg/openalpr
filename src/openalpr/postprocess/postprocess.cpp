@@ -84,6 +84,8 @@ namespace alpr
 
   void PostProcess::addLetter(string letter, int line_index, int charposition, float score)
   {
+	if (this->config->debugPostProcess)
+	  cout << "PostProcess letter=" << letter << ", line_index=" << line_index << ", charposition=" << charposition << ", score=" << score << ", min_confidence=" << min_confidence << endl;
     if (score < min_confidence)
       return;
 

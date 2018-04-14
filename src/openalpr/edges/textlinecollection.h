@@ -34,6 +34,7 @@ namespace alpr
     float charAngle;
 
     cv::Mat getDebugImage(cv::Size imageSize);
+    TextLine textLine;
 
   private:
 

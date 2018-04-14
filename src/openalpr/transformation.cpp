@@ -145,4 +145,21 @@ namespace alpr
     return Size(width, height);
   }
   
+  Size Transformation::getCropSize(vector<Point2f> areaCorners)
+    {
+      // Figure out the approximate width/height of the license plate region, so we can maintain the aspect ratio.
+      LineSegment leftEdge(round(areaCorners[3].x), round(areaCorners[3].y), round(areaCorners[0].x), round(areaCorners[0].y));
+      LineSegment rightEdge(round(areaCorners[2].x), round(areaCorners[2].y), round(areaCorners[1].x), round(areaCorners[1].y));
+      LineSegment topEdge(round(areaCorners[0].x), round(areaCorners[0].y), round(areaCorners[1].x), round(areaCorners[1].y));
+      LineSegment bottomEdge(round(areaCorners[3].x), round(areaCorners[3].y), round(areaCorners[2].x), round(areaCorners[2].y));
+
+      float w = distanceBetweenPoints(leftEdge.midpoint(), rightEdge.midpoint());
+      float h = distanceBetweenPoints(bottomEdge.midpoint(), topEdge.midpoint());
+
+      if (w <= 0 || h <= 0)
+        return Size(0,0);
+
+      return Size(w, h);
+    }
+
 }

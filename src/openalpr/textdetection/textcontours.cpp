@@ -18,6 +18,7 @@
 */
 
 #include "textcontours.h"
+#include <iostream>
 
 using namespace std;
 using namespace cv;
@@ -44,18 +45,46 @@ namespace alpr
 
     Mat tempThreshold(threshold.size(), CV_8U);
     threshold.copyTo(tempThreshold);
-    findContours(tempThreshold,
+    //medianBlur(tempThreshold, tempThreshold, 3);
+    //blur(tempThreshold, tempThreshold, Size(3, 3));
+    //Mat cannyOutput;
+    //Canny(tempThreshold, cannyOutput, 100, 300, 3);
+    //Canny(tempThreshold, cannyOutput, 66, 133);
+    findContours(tempThreshold,//cannyOutput,
                  contours, // a vector of contours
                  hierarchy,
                  CV_RETR_TREE, // retrieve all contours
-                 CV_CHAIN_APPROX_SIMPLE ); // all pixels of each contours
+                 CV_CHAIN_APPROX_SIMPLE, // all pixels of each contours
+				 Point(0, 0));
 
-    for (unsigned int i = 0; i < contours.size(); i++)
+    std::sort(contours.begin(), contours.end(),
+    		[](const vector<Point>& contour1, const vector<Point>& contour2){
+    			Rect ra(boundingRect(contour1));
+				  Rect rb(boundingRect(contour2));
+				  return (ra.x < rb.x);
+    		});
+    		//compareContourAreas);
+
+    for (unsigned int i = 0; i < contours.size(); i++) {
       goodIndices.push_back(true);
+      //if (config->debugCharAnalysis)
+      //Rect ra(boundingRect(contours[i]));
+      //std::cout << "TEXTCONTOURS: goodIndices[" << i << "]=true, x=" << ra.x << endl;
+    }
 
     this->width = threshold.cols;
     this->height = threshold.rows;
   }
+
+  /*bool TextContours::compareContourAreas ( std::vector<cv::Point> contour1, std::vector<cv::Point> contour2 ) {
+  //      double i = fabs( contourArea(cv::Mat(contour1)) );
+  //      double j = fabs( contourArea(cv::Mat(contour2)) );
+  //      return ( i < j );
+
+        Rect ra(boundingRect(contour1));
+  	  Rect rb(boundingRect(contour2));
+  	  return (ra.x < rb.x);
+    }*/
 
 
   unsigned int TextContours::size() {

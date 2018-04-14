@@ -40,6 +40,9 @@ namespace alpr
 
     this->analyze();
   }
+  CharacterAnalysis::CharacterAnalysis()
+    {
+    }
 
   CharacterAnalysis::~CharacterAnalysis()
   {
@@ -57,6 +60,29 @@ namespace alpr
     pipeline_data->clearThresholds();
     pipeline_data->thresholds = produceThresholds(pipeline_data->crop_gray, config);
 
+//    if (this->pipeline_data->config->debugCharAnalysis)
+//        {
+//          vector<Mat> tempDash;
+//          for (unsigned int z = 0; z < pipeline_data->thresholds.size(); z++)
+//          {
+//            Mat tmp(pipeline_data->thresholds[z].size(), pipeline_data->thresholds[z].type());
+//            pipeline_data->thresholds[z].copyTo(tmp);
+//            cvtColor(tmp, tmp, CV_GRAY2BGR);
+//
+//            tempDash.push_back(tmp);
+//          }
+//
+//          displayImage(config, "Character Region Step 0 Thresholds", drawImageDashboard(tempDash, pipeline_data->thresholds[0].type(), 3));
+//        }
+
+    if (this->pipeline_data->config->debugCharAnalysis) {
+		Mat dImg = drawImageDashboard(pipeline_data->thresholds, CV_8U, 3);
+		displayImage(config, "Character Region Step 01 Thresholds", dImg);
+
+		Mat dImg1(pipeline_data->crop_gray.size(), pipeline_data->crop_gray.type());
+		pipeline_data->crop_gray.copyTo(dImg1);
+		displayImage(config, "Character Region Step 02 Crop Grey", dImg1);
+    }
     timespec contoursStartTime;
     getTimeMonotonic(&contoursStartTime);
 
@@ -85,7 +111,7 @@ namespace alpr
       this->filter(pipeline_data->thresholds[i], allTextContours[i]);
 
       if (config->debugCharAnalysis)
-        cout << "Threshold " << i << " had " << allTextContours[i].getGoodIndicesCount() << " good indices." << endl;
+        cout << "Threshold " << i << " had " << allTextContours[i].getGoodIndicesCount() << " good indices, contours.size()=" << allTextContours[i].size() << endl;
     }
 
     if (config->debugTiming)
@@ -164,6 +190,23 @@ namespace alpr
     LineFinder lf(pipeline_data);
     vector<vector<Point> > linePolygons = lf.findLines(pipeline_data->crop_gray, bestContours);
 
+    if (this->config->debugCharAnalysis)
+        {
+          Mat img_contours = bestContours.drawDebugImage(bestThreshold);
+
+          for (unsigned int i = 0; i < linePolygons.size(); i++)
+              {
+                vector<Point> linePolygon = linePolygons[i];
+
+                //LineSegment topLine = LineSegment(linePolygon[0].x, linePolygon[0].y, linePolygon[1].x, linePolygon[1].y);
+                //LineSegment bottomLine = LineSegment(linePolygon[3].x, linePolygon[3].y, linePolygon[2].x, linePolygon[2].y);
+                line(img_contours, linePolygon[0], linePolygon[1], Scalar(255,0,255), 2);
+                line(img_contours, linePolygon[3], linePolygon[2], Scalar(255,0,255), 2);
+              }
+
+          displayImage(config, "Matching Contours with best lines", img_contours);
+        }
+
     vector<TextLine> tempTextLines;
     for (unsigned int i = 0; i < linePolygons.size(); i++)
     {
@@ -174,7 +217,7 @@ namespace alpr
 
       vector<Point> textArea = getCharArea(topLine, bottomLine);
 
-      TextLine textLine(textArea, linePolygon, pipeline_data->crop_gray.size());
+      TextLine textLine(textArea, linePolygon, pipeline_data->crop_gray.size(), bestContours);
 
       tempTextLines.push_back(textLine);
     }
@@ -191,7 +234,7 @@ namespace alpr
       vector<Point> linePolygon = tempTextLines[i].linePolygon;
       if (updatedTextArea.size() > 0 && linePolygon.size() > 0)
       {
-        pipeline_data->textLines.push_back(TextLine(updatedTextArea, linePolygon, pipeline_data->crop_gray.size()));
+        pipeline_data->textLines.push_back(TextLine(updatedTextArea, linePolygon, pipeline_data->crop_gray.size(), bestContours));
       }
 
     }
@@ -305,6 +348,7 @@ namespace alpr
   {
     int STARTING_MIN_HEIGHT = round (((float) img.rows) * config->charAnalysisMinPercent);
     int STARTING_MAX_HEIGHT = round (((float) img.rows) * (config->charAnalysisMinPercent + config->charAnalysisHeightRange));
+    //int STARTING_MAX_HEIGHT = round (((float) img.rows) * 0.90);
     int HEIGHT_STEP = round (((float) img.rows) * config->charAnalysisHeightStepSize);
     int NUM_STEPS = config->charAnalysisNumSteps;
 
@@ -312,13 +356,18 @@ namespace alpr
 
     vector<bool> bestIndices;
      
-    for (int i = 0; i < NUM_STEPS; i++)
+    for (int i = 0; i < NUM_STEPS/* + 1*/; i++)
     {
 
       //vector<bool> goodIndices(contours.size());
       for (unsigned int z = 0; z < textContours.size(); z++) textContours.goodIndices[z] = true;
 
-      this->filterByBoxSize(textContours, STARTING_MIN_HEIGHT + (i * HEIGHT_STEP), STARTING_MAX_HEIGHT + (i * HEIGHT_STEP));
+//      if (i == NUM_STEPS) {
+//    	  STARTING_MAX_HEIGHT= round (((float) img.rows) * 0.90);
+//    	  this->filterByBoxSize(textContours, STARTING_MIN_HEIGHT + (i * HEIGHT_STEP), STARTING_MAX_HEIGHT);
+//      } else {
+    	  this->filterByBoxSize(textContours, STARTING_MIN_HEIGHT + (i * HEIGHT_STEP), STARTING_MAX_HEIGHT + (i * HEIGHT_STEP));
+//      }
 
       int goodIndices = textContours.getGoodIndicesCount();
       if ( goodIndices == 0 || goodIndices <= bestFitScore)	// Don't bother doing more filtering if we already lost...
@@ -347,21 +396,29 @@ namespace alpr
   void CharacterAnalysis::filterByBoxSize(TextContours& textContours, int minHeightPx, int maxHeightPx)
   {
     // For multiline plates, we want to target the biggest line for character analysis, since it should be easier to spot.
-    float larger_char_height_mm = 0;
-    float larger_char_width_mm = 0;
+    float larger_char_height_mm = config->charHeightMM[0];
+    float larger_char_width_mm = config->charWidthMM[0];
+
+    float smaller_char_height_mm = config->charHeightMM[0];
+    float smaller_char_width_mm = config->charWidthMM[0];
     for (unsigned int i = 0; i < config->charHeightMM.size(); i++)
     {
       if (config->charHeightMM[i] > larger_char_height_mm)
       {
         larger_char_height_mm = config->charHeightMM[i];
         larger_char_width_mm = config->charWidthMM[i];
+      } else if (config->charHeightMM[i] < smaller_char_height_mm) {
+    	  smaller_char_height_mm = config->charHeightMM[i];
+    	  smaller_char_width_mm = config->charWidthMM[i];
       }
     }
     
-    float idealAspect=larger_char_width_mm / larger_char_height_mm;
+    float idealAspect1=larger_char_width_mm / larger_char_height_mm;
+    float idealAspect2=smaller_char_width_mm / smaller_char_height_mm;
     float aspecttolerance=0.25;
 
-
+//    if (this->config->debugCharAnalysis)
+//              	 cout << "CharacterAnalysis#filterByBoxSize: textContours.size()=" << textContours.size() << endl;
     for (unsigned int i = 0; i < textContours.size(); i++)
     {
       if (textContours.goodIndices[i] == false)
@@ -381,8 +438,19 @@ namespace alpr
         float charAspect= (float)mr.width/(float)mr.height;
 
         //cout << "  -- stage 2 aspect: " << abs(charAspect) << " - " << aspecttolerance << endl;
-        if (abs(charAspect - idealAspect) < aspecttolerance)
+        if (abs(charAspect - idealAspect1) < aspecttolerance || abs(charAspect - idealAspect2) < aspecttolerance) {
           textContours.goodIndices[i] = true;
+          if (this->config->debugCharAnalysis)
+          	 cout << "CharacterAnalysis#filterByBoxSize: TRUE for i=" << i << ", mr.height=" << mr.height << ", minHeightPx=" << minHeightPx << ", mr.height=" << mr.height
+		  	  << ", maxHeightPx=" << maxHeightPx << ", mr.width=" << mr.width << ", minWidth=" << minWidth << endl;
+        } else {
+        	if (this->config->debugCharAnalysis)
+			  cout << "CharacterAnalysis#filterByBoxSize: false for i=" << i << endl;
+        }
+      } else {
+    	  if (this->config->debugCharAnalysis)
+    	  	  cout << "CharacterAnalysis#filterByBoxSize: false for i=" << i << ", mr.height=" << mr.height << " < minHeightPx=" << minHeightPx << " || mr.height=" << mr.height
+			  	  << " > maxHeightPx=" << maxHeightPx << " || mr.width=" << mr.width << " <= minWidth=" << minWidth << endl;
       }
     }
 
@@ -390,12 +458,14 @@ namespace alpr
 
   void CharacterAnalysis::filterContourHoles(TextContours& textContours)
   {
-
-    for (unsigned int i = 0; i < textContours.size(); i++)
+	  if (this->config->debugCharAnalysis)
+	            cout << "filterContourHoles: textContours.size()=" << textContours.size() << endl;
+    int goodCnt = 0;
+	for (unsigned int i = 0; i < textContours.size(); i++)
     {
       if (textContours.goodIndices[i] == false)
         continue;
-
+      goodCnt++;
       textContours.goodIndices[i] = false;  // Set it to not included unless it proves valid
 
       int parentIndex = textContours.hierarchy[i][3];
@@ -405,14 +475,45 @@ namespace alpr
         // this contour is a child of an already identified contour.  REMOVE it
         if (this->config->debugCharAnalysis)
         {
-          cout << "filterContourHoles: contour index: " << i << endl;
+          cout << "filterContourHoles by parent-1: contour index: " << i << endl;
         }
       }
       else
       {
-        textContours.goodIndices[i] = true;
+        //textContours.goodIndices[i] = true;
+    	Rect rect = boundingRect(textContours.contours[i]);
+		Point center(rect.x + (rect.width / 2), rect.y + (rect.height / 2));
+		if (this->config->debugCharAnalysis)
+			cout << "filterContourHoles: i=" << i << ", rect=" << rect << endl;
+
+		bool foundParent = false;
+		for (unsigned int k = 0; k < textContours.size(); k++)
+		{
+			if (textContours.goodIndices[k] == false)
+			        continue;
+			Rect rectK = boundingRect(textContours.contours[k]);
+			if (this->config->debugCharAnalysis)
+				cout << "filterContourHoles: k=" << k << ", rectK=" << rectK << endl;
+		  // Check if the center of the smaller rectangle is inside the bigger rectangle.
+		  // If so, add it to the children and continue on.
+		  if (rectK.contains(center) && rectK.x < rect.x)
+		  {
+			foundParent = true;
+			break;
+		  }
+
+		}
+		if (!foundParent) {
+			textContours.goodIndices[i] = true;
+		} else if (this->config->debugCharAnalysis) {
+          cout << "filterContourHoles by parent-2: contour index: " << i << endl;
+        }
       }
+
+
     }
+	if (this->config->debugCharAnalysis)
+		cout << "filterContourHoles: textContours.size()=" << textContours.size() << ", goodCnt=" << goodCnt << endl;
 
   }
 
@@ -487,8 +588,8 @@ namespace alpr
 
   void CharacterAnalysis::filterBetweenLines(Mat img, TextContours& textContours, vector<TextLine> textLines )
   {
-    static float MIN_AREA_PERCENT_WITHIN_LINES = 0.88;
-    static float MAX_DISTANCE_PERCENT_FROM_LINES = 0.15;
+    static float MIN_AREA_PERCENT_WITHIN_LINES = 0.8;//0.88;
+    static float MAX_DISTANCE_PERCENT_FROM_LINES = 0.25;//0.15;
 
     if (textLines.size() == 0)
       return;
@@ -502,11 +603,14 @@ namespace alpr
     for (unsigned int i = 0; i < textLines.size(); i++)
       fillConvexPoly(outerMask, textLines[i].linePolygon.data(), textLines[i].linePolygon.size(), Scalar(255,255,255));
 
+    unsigned int goodIndicesCnt = 0;
     // For each contour, determine if enough of it is between the lines to qualify
     for (unsigned int i = 0; i < textContours.size(); i++)
     {
       if (textContours.goodIndices[i] == false)
         continue;
+
+      goodIndicesCnt++;
 
       float percentInsideMask = getContourAreaPercentInsideMask(outerMask, 
               textContours.contours,
@@ -519,7 +623,7 @@ namespace alpr
       {
         // Not enough area is inside the lines.
         if (config->debugCharAnalysis)
-          cout << "Rejecting due to insufficient area" << endl;
+          cout << "Rejecting due to insufficient area, goodIndicesCnt=" << goodIndicesCnt << endl;
         textContours.goodIndices[i] = false; 
 
         continue;
@@ -556,7 +660,7 @@ namespace alpr
 
           textContours.goodIndices[i] = false; 
           if (config->debugCharAnalysis)
-            cout << "Rejecting due to top/bottom points that are out of range" << endl;
+            cout << "Rejecting due to top/bottom points that are out of range, goodIndicesCnt=" << goodIndicesCnt << endl;
         }
       }
 
@@ -678,5 +782,152 @@ namespace alpr
 
     return charArea;
   }
+
+
+  void CharacterAnalysis::findTextContours(PipelineData* pipeline_data)
+    {
+	  this->pipeline_data = pipeline_data;
+	      this->config = pipeline_data->config;
+      timespec startTime;
+      getTimeMonotonic(&startTime);
+
+//      if (config->always_invert)
+//        bitwise_not(pipeline_data->crop_gray, pipeline_data->crop_gray);
+//
+//      pipeline_data->clearThresholds();
+//      pipeline_data->thresholds = produceThresholds(pipeline_data->crop_gray, config);
+
+//      if (this->pipeline_data->config->debugCharAnalysis) {
+//  		Mat dImg = drawImageDashboard(pipeline_data->thresholds, CV_8U, 3);
+//  		displayImage(config, "Character Region Step 01 Thresholds", dImg);
+//
+//  		Mat dImg1(pipeline_data->crop_gray.size(), pipeline_data->crop_gray.type());
+//  		pipeline_data->crop_gray.copyTo(dImg1);
+//  		displayImage(config, "Character Region Step 02 Crop Grey", dImg1);
+//      }
+      timespec contoursStartTime;
+      getTimeMonotonic(&contoursStartTime);
+
+      for (unsigned int i = 0; i < pipeline_data->thresholds.size(); i++)
+      {
+        TextContours tc(pipeline_data->thresholds[i]);
+
+        allTextContours.push_back(tc);
+      }
+
+//      if (config->debugTiming)
+//      {
+//        timespec contoursEndTime;
+//        getTimeMonotonic(&contoursEndTime);
+//        cout << "  -- Character Analysis Find Contours Time: " << diffclock(contoursStartTime, contoursEndTime) << "ms." << endl;
+//      }
+      //Mat img_equalized = equalizeBrightness(img_gray);
+
+      timespec filterStartTime;
+      getTimeMonotonic(&filterStartTime);
+
+      for (unsigned int i = 0; i < pipeline_data->thresholds.size(); i++)
+      {
+        this->filter(pipeline_data->thresholds[i], allTextContours[i]);
+
+        if (config->debugCharAnalysis)
+          cout << "Threshold " << i << " had " << allTextContours[i].getGoodIndicesCount() << " good indices, contours.size()=" << allTextContours[i].size() << endl;
+      }
+
+      if (config->debugTiming)
+      {
+        timespec filterEndTime;
+        getTimeMonotonic(&filterEndTime);
+        cout << "  -- Character Analysis Filter Time: " << diffclock(filterStartTime, filterEndTime) << "ms." << endl;
+      }
+
+      PlateMask plateMask(pipeline_data);
+      plateMask.findOuterBoxMask(allTextContours);
+
+      pipeline_data->hasPlateBorder = plateMask.hasPlateMask;
+      pipeline_data->plateBorderMask = plateMask.getMask();
+
+      if (plateMask.hasPlateMask)
+      {
+        // Filter out bad contours now that we have an outer box mask...
+        for (unsigned int i = 0; i < pipeline_data->thresholds.size(); i++)
+        {
+          filterByOuterMask(allTextContours[i]);
+        }
+      }
+
+      int bestFitScore = -1;
+      int bestFitIndex = -1;
+      for (unsigned int i = 0; i < pipeline_data->thresholds.size(); i++)
+      {
+
+        int segmentCount = allTextContours[i].getGoodIndicesCount();
+
+        if (segmentCount > bestFitScore)
+        {
+          bestFitScore = segmentCount;
+          bestFitIndex = i;
+          bestThreshold = pipeline_data->thresholds[i];
+          bestContours = allTextContours[i];
+        }
+      }
+
+      if (this->config->debugCharAnalysis)
+        cout << "Best fit score: " << bestFitScore << " Index: " << bestFitIndex << endl;
+
+      if (bestFitScore <= 1)
+      {
+        pipeline_data->disqualified = true;
+        pipeline_data->disqualify_reason = "Low best fit score in characteranalysis";
+        return;
+      }
+
+      //getColorMask(img, allContours, allHierarchy, charSegments);
+
+      if (this->config->debugCharAnalysis)
+      {
+        Mat img_contours = bestContours.drawDebugImage(bestThreshold);
+
+        displayImage(config, "Matching Contours(2)", img_contours);
+      }
+
+      if (config->auto_invert)
+        pipeline_data->plate_inverted = isPlateInverted();
+      else
+        pipeline_data->plate_inverted = config->always_invert;
+
+      if (config->debugGeneral)
+        cout << "Plate inverted: " << pipeline_data->plate_inverted << endl;
+
+      // Invert multiline plates and redo the thresholds before finding the second line
+      if (config->multiline && config->auto_invert && pipeline_data->plate_inverted)
+      {
+        bitwise_not(pipeline_data->crop_gray, pipeline_data->crop_gray);
+        pipeline_data->thresholds = produceThresholds(pipeline_data->crop_gray, pipeline_data->config);
+      }
+
+
+      LineFinder lf(pipeline_data);
+      vector<vector<Point> > linePolygons = lf.findLines(pipeline_data->crop_gray, bestContours);
+
+      if (this->config->debugCharAnalysis)
+          {
+            Mat img_contours = bestContours.drawDebugImage(bestThreshold);
+
+            for (unsigned int i = 0; i < linePolygons.size(); i++)
+                {
+                  vector<Point> linePolygon = linePolygons[i];
+
+                  //LineSegment topLine = LineSegment(linePolygon[0].x, linePolygon[0].y, linePolygon[1].x, linePolygon[1].y);
+                  //LineSegment bottomLine = LineSegment(linePolygon[3].x, linePolygon[3].y, linePolygon[2].x, linePolygon[2].y);
+                  line(img_contours, linePolygon[0], linePolygon[1], Scalar(255,0,255), 2);
+                  line(img_contours, linePolygon[3], linePolygon[2], Scalar(255,0,255), 2);
+                }
+
+            displayImage(config, "Matching Contours with best lines(2)", img_contours);
+          }
+
+
+    }
 
 }

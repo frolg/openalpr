@@ -69,6 +69,7 @@ namespace alpr
 
 
       // OCR
+      std::vector<std::string> thresholdOcrLines;
 
   };
 

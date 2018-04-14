@@ -57,7 +57,10 @@ namespace alpr
 
     int horizontalLines = this->plateLines->horizontalLines.size();
     int verticalLines = this->plateLines->verticalLines.size();
-
+    if (pipelineData->config->debugPlateCorners) {
+    cout << "PlateCorners::horizontalLines.size()=" << this->plateLines->horizontalLines.size() << endl;
+    cout << "PlateCorners::verticalLines.size()=" << this->plateLines->verticalLines.size() << endl;
+    }
     // layout horizontal lines
     for (int h1 = NO_LINE; h1 < horizontalLines; h1++)
     {
@@ -100,6 +103,10 @@ namespace alpr
       line(imgCorners, this->bestLeft.p1, this->bestLeft.p2, Scalar(255, 0, 0), 1, CV_AA);
 
       displayImage(pipelineData->config, "Winning top/bottom Boundaries", imgCorners);
+      cout << "Winning top/bottom Boundaries: bestTop.p1(" << bestTop.p1.x << ", " << bestTop.p1.y << "), p2(" << bestTop.p2.x << ", " << bestTop.p2.y << ")" << endl;
+      cout << "Winning top/bottom Boundaries: bestBottom.p1(" << bestBottom.p1.x << ", " << bestBottom.p1.y << "), p2(" << bestBottom.p2.x << ", " << bestBottom.p2.y << ")" << endl;
+      cout << "Winning top/bottom Boundaries: bestRight.p1(" << bestRight.p1.x << ", " << bestRight.p1.y << "), p2(" << bestRight.p2.x << ", " << bestRight.p2.y << ")" << endl;
+      cout << "Winning top/bottom Boundaries: bestLeft.p1(" << bestLeft.p1.x << ", " << bestLeft.p1.y << "), p2(" << bestLeft.p2.x << ", " << bestLeft.p2.y << ")" << endl;
     }
 
     // Check if a left/right edge has been established.
@@ -340,6 +347,10 @@ namespace alpr
       cvtColor(debugImg, debugImg, CV_GRAY2BGR);
       line(debugImg, top.p1, top.p2, Scalar(0,0,255), 2);
       line(debugImg, bottom.p1, bottom.p2, Scalar(0,0,255), 2);
+      displayImage(pipelineData->config, "Plate corners", debugImg);
+
+      cout << "Plate corners: top.p1(" << top.p1.x << ", " << top.p1.y << "), p2(" << top.p2.x << ", " << top.p2.y << ")" << endl;
+      cout << "Plate corners: bottom.p1(" << bottom.p1.x << ", " << bottom.p1.y << "), p2(" << bottom.p2.x << ", " << bottom.p2.y << ")" << endl;
       //drawAndWait(&debugImg);
 
     }

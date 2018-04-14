@@ -27,6 +27,7 @@
 #include "histogramvertical.h"
 #include "config.h"
 #include "textdetection/textcontours.h"
+#include "textdetection/characteranalysis.h"
 #include "pipeline_data.h"
 
 namespace alpr
@@ -49,6 +50,7 @@ namespace alpr
       virtual ~CharacterSegmenter();
 
       void segment();
+      void removeSmallContoursPreprocess(std::vector<cv::Mat> thresholds, TextLine textLine);
       
       int confidence;
 
@@ -66,7 +68,7 @@ namespace alpr
 
       cv::Mat getCharBoxMask(cv::Mat img_threshold, std::vector<cv::Rect> charBoxes);
 
-      void removeSmallContours(std::vector<cv::Mat> thresholds, float avgCharHeight, TextLine textLine);
+      void removeSmallContours(std::vector<cv::Mat> thresholds, float avgCharHeight,  float avgCharWidth, TextLine textLine);
 
       std::vector<cv::Rect> getHistogramBoxes(HistogramVertical histogram, float avgCharWidth, float avgCharHeight, float* score);
       std::vector<cv::Rect> getBestCharBoxes(cv::Mat img, std::vector<cv::Rect> charBoxes, float avgCharWidth);

@@ -37,6 +37,7 @@ namespace alpr
 
     public:
       CharacterAnalysis(PipelineData* pipeline_data);
+      CharacterAnalysis();
       virtual ~CharacterAnalysis();
 
       cv::Mat bestThreshold;
@@ -47,6 +48,7 @@ namespace alpr
       std::vector<TextContours> allTextContours;
 
       void analyze();
+      void findTextContours(PipelineData* pipeline_data);
 
       cv::Mat getCharacterMask();
 

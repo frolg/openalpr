@@ -42,6 +42,7 @@ namespace alpr
     std::vector<cv::Point2f> remapSmallPointstoCrop(std::vector<cv::Point2f> smallPoints, cv::Mat transformationMatrix);
 
     cv::Size getCropSize(std::vector<cv::Point2f> areaCorners, cv::Size targetSize);
+    cv::Size getCropSize(std::vector<cv::Point2f> areaCorners);
 
   private:
     cv::Mat bigImage;

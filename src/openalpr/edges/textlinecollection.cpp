@@ -14,7 +14,7 @@ namespace alpr
 {
 
   TextLineCollection::TextLineCollection(std::vector<TextLine> textLines) {
-
+	  this -> textLine = textLines[0];
 
     charHeight = 0;
     charAngle = 0;

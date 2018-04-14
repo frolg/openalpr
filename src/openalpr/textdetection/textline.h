@@ -22,6 +22,7 @@
 #define	OPENALPR_TEXTLINE_H
 
 #include "utility.h"
+#include "textdetection/textcontours.h"
 #include "opencv2/imgproc/imgproc.hpp"
 
 namespace alpr
@@ -29,8 +30,9 @@ namespace alpr
 
   class TextLine {
   public:
-    TextLine(std::vector<cv::Point> textArea, std::vector<cv::Point> linePolygon, cv::Size imgSize);
-    TextLine(std::vector<cv::Point2f> textArea, std::vector<cv::Point2f> linePolygon, cv::Size imgSize);
+	  TextLine();
+    TextLine(std::vector<cv::Point> textArea, std::vector<cv::Point> linePolygon, cv::Size imgSize, TextContours textContours);
+    TextLine(std::vector<cv::Point2f> textArea, std::vector<cv::Point2f> linePolygon, cv::Size imgSize, TextContours textContours);
     virtual ~TextLine();
 
 
@@ -47,10 +49,12 @@ namespace alpr
     float lineHeight;
     float angle;
 
+    TextContours textContours;
+
     cv::Mat drawDebugImage(cv::Mat baseImage);
   private:
 
-    void initialize(std::vector<cv::Point> textArea, std::vector<cv::Point> linePolygon, cv::Size imgSize);
+    void initialize(std::vector<cv::Point> textArea, std::vector<cv::Point> linePolygon, cv::Size imgSize, TextContours textContours);
   };
 
 }

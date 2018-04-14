@@ -58,20 +58,39 @@ namespace alpr
     //-- Detect plates
     timespec startTime;
     getTimeMonotonic(&startTime);
+    //displayImage(config, "DetectorCPU: before equalizeHist", frame);
+//    plate_cascade.detectMultiScale( frame, plates, config->detection_iteration_increase, config->detectionStrictness,
+//                                          CV_HAAR_DO_CANNY_PRUNING,
+//                                          //CV_HAAR_SCALE_IMAGE,
+//                                          min_plate_size, max_plate_size );
+    plate_cascade.detectMultiScale( frame, plates, config->detection_iteration_increase, config->detectionStrictness,
+                                              CV_HAAR_DO_CANNY_PRUNING,
+                                              //CV_HAAR_SCALE_IMAGE,
+                                              min_plate_size, max_plate_size );
+    if (config->debugTiming)
+        {
+          cout << "plates.size()=" << plates.size() << endl;
+        }
 
     equalizeHist( frame, frame );
+    //displayImage(config, "DetectorCPU: after equalizeHist", frame);
+    plates.clear();
     
+//    plate_cascade.detectMultiScale( frame, plates, config->detection_iteration_increase, config->detectionStrictness,
+//                                      CV_HAAR_DO_CANNY_PRUNING,
+//                                      //CV_HAAR_SCALE_IMAGE,
+//                                      min_plate_size, max_plate_size );
     plate_cascade.detectMultiScale( frame, plates, config->detection_iteration_increase, config->detectionStrictness,
-                                      CV_HAAR_DO_CANNY_PRUNING,
-                                      //0|CV_HAAR_SCALE_IMAGE,
-                                      min_plate_size, max_plate_size );
+                                              CV_HAAR_DO_CANNY_PRUNING,
+                                              //CV_HAAR_SCALE_IMAGE,
+                                              min_plate_size, max_plate_size );
 
 
     if (config->debugTiming)
     {
       timespec endTime;
       getTimeMonotonic(&endTime);
-      cout << "LBP Time: " << diffclock(startTime, endTime) << "ms." << endl;
+      cout << "LBP Time: " << diffclock(startTime, endTime) << "ms., plates.size()=" << plates.size() << endl;
     }
 
     return plates;

@@ -125,7 +125,8 @@ namespace alpr
 
     // Iterate through each country provided (typically just one)
     // and aggregate the results if necessary
-    ResultAggregator country_aggregator(MERGE_PICK_BEST, topN, config);
+    //ResultAggregator country_aggregator(MERGE_PICK_BEST, topN, config);
+    ResultAggregator country_aggregator(MERGE_COMBINE, topN, config);
     for (unsigned int i = 0; i < config->loaded_countries.size(); i++)
     {
       if (config->debugGeneral)
@@ -315,6 +316,11 @@ namespace alpr
         }
 
         country_recognizers.ocr->performOCR(&pipeline_data);
+        for (unsigned int y = 0; y < pipeline_data.thresholdOcrLines.size(); y++) {
+        	plateResult.thresholdOcrLines.push_back(pipeline_data.thresholdOcrLines[y]);
+        }
+
+
         country_recognizers.ocr->postProcessor.analyze(plateResult.region, topN);
 
         timespec resultsStartTime;

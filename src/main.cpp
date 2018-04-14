@@ -22,6 +22,7 @@
 #include <iostream>
 #include <iterator>
 #include <algorithm>
+#include <sys/time.h>
 
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
@@ -41,12 +42,18 @@ const std::string MAIN_WINDOW_NAME = "ALPR main window";
 const bool SAVE_LAST_VIDEO_STILL = false;
 const std::string LAST_VIDEO_STILL_LOCATION = "/tmp/laststill.jpg";
 const std::string WEBCAM_PREFIX = "/dev/video";
+//const std::string DEFDIR = "/var/lib/openalpr/plateimages/";
+const std::string DEFDIR = "/home/srv/work/plateimages/";
 MotionDetector motiondetector;
 bool do_motiondetection = true;
 
 /** Function Headers */
 bool detectandshow(Alpr* alpr, cv::Mat frame, std::string region, bool writeJson);
+bool detectandshow(Alpr* alpr, cv::Mat frame, std::string region, bool writeJson, std::string fileName);
 bool is_supported_image(std::string image_file);
+std::string fname();
+std::string fnameToLat(std::string fname);
+void process_dir(std::string dir, Alpr alpr, bool outputJson);
 
 bool measureProcessingTime = false;
 std::string templatePattern;
@@ -54,6 +61,10 @@ std::string templatePattern;
 // This boolean is set to false when the user hits terminates (e.g., CTRL+C )
 // so we can end infinite loops for things like video processing.
 bool program_active = true;
+
+static int totalCount = 0;
+static int detectedCount = 0;
+static int additionalDetectedCount = 0;
 
 int main( int argc, const char** argv )
 {
@@ -65,6 +76,7 @@ int main( int argc, const char** argv )
   std::string country;
   int topn;
   bool debug_mode = false;
+  bool save = false;
 
   TCLAP::CmdLine cmd("OpenAlpr Command Line Utility", ' ', Alpr::getVersion());
 
@@ -82,6 +94,7 @@ int main( int argc, const char** argv )
   TCLAP::SwitchArg detectRegionSwitch("d","detect_region","Attempt to detect the region of the plate image.  [Experimental]  Default=off", cmd, false);
   TCLAP::SwitchArg clockSwitch("","clock","Measure/print the total time to process image and all plates.  Default=off", cmd, false);
   TCLAP::SwitchArg motiondetect("", "motion", "Use motion detection on video file or stream.  Default=off", cmd, false);
+  TCLAP::SwitchArg saveFrameSwitch("s","saveframe","Save frame with recognized plate to /var/lib/openalpr/plateimages.  [Experimental]  Default=off", cmd, false);
 
   try
   {
@@ -111,6 +124,8 @@ int main( int argc, const char** argv )
     topn = topNArg.getValue();
     measureProcessingTime = clockSwitch.getValue();
 	do_motiondetection = motiondetect.getValue();
+	save = saveFrameSwitch.getValue()&&debug_mode; //save frames in debug mode only
+	//std::cout << "MAIN save=" << save << std::endl;
   }
   catch (TCLAP::ArgException &e)    // catch any exceptions
   {
@@ -158,7 +173,9 @@ int main( int argc, const char** argv )
       frame = cv::imdecode(cv::Mat(data), 1);
       if (!frame.empty())
       {
-        detectandshow(&alpr, frame, "", outputJson);
+        //detectandshow(&alpr, frame, "", outputJson);
+    	  if (detectandshow(&alpr, frame, "", outputJson)&&save)
+    		  cv::imwrite(fname(), frame);
       }
       else
       {
@@ -173,7 +190,8 @@ int main( int argc, const char** argv )
         if (fileExists(filename.c_str()))
         {
           frame = cv::imread(filename);
-          detectandshow(&alpr, frame, "", outputJson);
+          if (detectandshow(&alpr, frame, "", outputJson)&&save)
+				cv::imwrite(fname(), frame);
         }
         else
         {
@@ -204,7 +222,8 @@ int main( int argc, const char** argv )
       {
         if (framenum == 0)
           motiondetector.ResetMotionDetection(&frame);
-        detectandshow(&alpr, frame, "", outputJson);
+        if (detectandshow(&alpr, frame, "", outputJson)&&save)
+        	cv::imwrite(fname(), frame);
         sleep_ms(10);
         framenum++;
       }
@@ -228,7 +247,8 @@ int main( int argc, const char** argv )
         {
           if (framenum == 0)
             motiondetector.ResetMotionDetection(&latestFrame);
-          detectandshow(&alpr, latestFrame, "", outputJson);
+          if (detectandshow(&alpr, latestFrame, "", outputJson)&&save)
+        	  cv::imwrite(fname(), latestFrame);
         }
 
         // Sleep 10ms
@@ -266,7 +286,8 @@ int main( int argc, const char** argv )
           
           if (framenum == 0)
             motiondetector.ResetMotionDetection(&frame);
-          detectandshow(&alpr, frame, "", outputJson);
+          if (detectandshow(&alpr, frame, "", outputJson)&&save)
+        	  cv::imwrite(fname(), frame);
           //create a 1ms delay
           sleep_ms(1);
           framenum++;
@@ -283,7 +304,10 @@ int main( int argc, const char** argv )
       {
         frame = cv::imread(filename);
 
-        bool plate_found = detectandshow(&alpr, frame, "", outputJson);
+        bool plate_found = detectandshow(&alpr, frame, "", outputJson, filename);
+        if (plate_found&&save) {
+        	cv::imwrite(fname(), frame);
+        }
 
         if (!plate_found && !outputJson)
           std::cout << "No license plates found." << std::endl;
@@ -295,7 +319,7 @@ int main( int argc, const char** argv )
     }
     else if (DirectoryExists(filename.c_str()))
     {
-      std::vector<std::string> files = getFilesInDir(filename.c_str());
+      /*std::vector<std::string> files = getFilesInDir(filename.c_str());
 
       std::sort(files.begin(), files.end(), stringCompare);
 
@@ -309,13 +333,15 @@ int main( int argc, const char** argv )
           if (detectandshow(&alpr, frame, "", outputJson))
           {
             //while ((char) cv::waitKey(50) != 'c') { }
+        	  cv::imwrite(fname(), frame);
           }
           else
           {
             //cv::waitKey(50);
           }
         }
-      }
+      }*/
+    	 process_dir(filename, alpr, outputJson);
     }
     else
     {
@@ -324,8 +350,44 @@ int main( int argc, const char** argv )
     }
   }
 
+  std::cout << "Total count: " << totalCount << ", detectedCount=" << detectedCount << ", additionalDetectedCount=" << additionalDetectedCount << std::endl;
+
   return 0;
 }
+
+void process_dir(std::string dir, Alpr alpr, bool outputJson)
+{
+  if (DirectoryExists(dir.c_str()))
+  {
+      std::vector<std::string> files = getFilesInDir(dir.c_str());
+
+      std::sort(files.begin(), files.end(), stringCompare);
+
+      for (int i = 0; i < files.size(); i++)
+      {
+        std::string fullpath = dir + "/" + files[i];
+        if (is_supported_image(files[i]))
+        {
+          std::cout << fullpath << std::endl;
+          cv::Mat frame = cv::imread(fullpath.c_str());
+          if (detectandshow(&alpr, frame, "", outputJson, files[i]))
+          {
+            //while ((char) cv::waitKey(50) != 'c') { }
+                  cv::imwrite(fname(), frame);
+          }
+          else
+          {
+            //cv::waitKey(50);
+          }
+        }
+        else if (files[i].compare("PaxHeader") != 0 && DirectoryExists(fullpath.c_str()))
+        {
+          process_dir(fullpath, alpr, outputJson);
+        }
+      }
+  }
+}
+
 
 bool is_supported_image(std::string image_file)
 {
@@ -335,7 +397,11 @@ bool is_supported_image(std::string image_file)
 }
 
 
-bool detectandshow( Alpr* alpr, cv::Mat frame, std::string region, bool writeJson)
+bool detectandshow( Alpr* alpr, cv::Mat frame, std::string region, bool writeJson) {
+	return detectandshow(alpr, frame, region, writeJson, "");
+}
+
+bool detectandshow(Alpr* alpr, cv::Mat frame, std::string region, bool writeJson, std::string fileName)
 {
 
   timespec startTime;
@@ -364,6 +430,9 @@ bool detectandshow( Alpr* alpr, cv::Mat frame, std::string region, bool writeJso
   }
   else
   {
+	  bool detected = false;
+	  totalCount++;
+
     for (int i = 0; i < results.plates.size(); i++)
     {
       std::cout << "plate" << i << ": " << results.plates[i].topNPlates.size() << " results";
@@ -374,23 +443,134 @@ bool detectandshow( Alpr* alpr, cv::Mat frame, std::string region, bool writeJso
       if (results.plates[i].regionConfidence > 0)
         std::cout << "State ID: " << results.plates[i].region << " (" << results.plates[i].regionConfidence << "% confidence)" << std::endl;
       
+
+      if (fileName.size() != 0) {
+    	  std::string newFilename = fnameToLat(fileName);
+//    	  if (debug_mode)
+//    	    	std::cout << "LAT filename: " << newFilename << std::endl;
+		  for (int k = 0; k < results.plates[i].topNPlates.size(); k++)
+			{
+				std::string plateText = results.plates[i].topNPlates[k].characters;
+				if(plateText.compare(newFilename) == 0) {
+					detected = true;
+				}
+		   }
+
+      }
+
       for (int k = 0; k < results.plates[i].topNPlates.size(); k++)
       {
-        // Replace the multiline newline character with a dash
-        std::string no_newline = results.plates[i].topNPlates[k].characters;
-        std::replace(no_newline.begin(), no_newline.end(), '\n','-');
-        
-        std::cout << "    - " << no_newline << "\t confidence: " << results.plates[i].topNPlates[k].overall_confidence;
-        if (templatePattern.size() > 0 || results.plates[i].regionConfidence > 0)
-          std::cout << "\t pattern_match: " << results.plates[i].topNPlates[k].matches_template;
-        
-        std::cout << std::endl;
+    	  if (results.plates[i].topNPlates[k].matches_template && results.plates[i].topNPlates[k].characters.size() == 9) {
+			// Replace the multiline newline character with a dash
+			std::string no_newline = results.plates[i].topNPlates[k].characters;
+			std::replace(no_newline.begin(), no_newline.end(), '\n','-');
+
+			std::cout << "    - " << no_newline << "\t confidence: " << results.plates[i].topNPlates[k].overall_confidence;
+			if (templatePattern.size() > 0 || results.plates[i].regionConfidence > 0)
+			  std::cout << "\t pattern_match: " << results.plates[i].topNPlates[k].matches_template;
+
+			std::cout << std::endl;
+    	  }
       }
+      for (int k = 0; k < results.plates[i].topNPlates.size(); k++)
+		{
+		  if (results.plates[i].topNPlates[k].matches_template && results.plates[i].topNPlates[k].characters.size() == 8) {
+			// Replace the multiline newline character with a dash
+			std::string no_newline = results.plates[i].topNPlates[k].characters;
+			std::replace(no_newline.begin(), no_newline.end(), '\n','-');
+
+			std::cout << "    - " << no_newline << "\t confidence: " << results.plates[i].topNPlates[k].overall_confidence;
+			if (templatePattern.size() > 0 || results.plates[i].regionConfidence > 0)
+			  std::cout << "\t pattern_match: " << results.plates[i].topNPlates[k].matches_template;
+
+			std::cout << std::endl;
+		  }
+		}
+      for (int k = 0; k < results.plates[i].topNPlates.size(); k++)
+		{
+    	  if (!results.plates[i].topNPlates[k].matches_template) {
+			  // Replace the multiline newline character with a dash
+			  std::string no_newline = results.plates[i].topNPlates[k].characters;
+			  std::replace(no_newline.begin(), no_newline.end(), '\n','-');
+
+			  std::cout << "    - " << no_newline << "\t confidence: " << results.plates[i].topNPlates[k].overall_confidence;
+			  if (templatePattern.size() > 0 || results.plates[i].regionConfidence > 0)
+				std::cout << "\t pattern_match: " << results.plates[i].topNPlates[k].matches_template;
+
+			  std::cout << std::endl;
+    	  }
+		}
+    }
+    if (detected) {
+    	detectedCount++;
+    } else {
+    	if (fileName.size() != 0) {
+    	    std::string newFilename = fnameToLat(fileName);
+			for (int i = 0; i < results.plates.size(); i++) {
+				for (int k = 0; k < results.plates[i].thresholdOcrLines.size(); k++) {
+					if (results.plates[i].thresholdOcrLines[k].find(newFilename) != std::string::npos){
+						additionalDetectedCount++;
+					}
+				}
+			}
+    	}
     }
   }
 
 
 
   return results.plates.size() > 0;
+}
+
+std::string fname(){
+//generate filename for snapshot based on timestamp
+  struct timeval tp;
+  gettimeofday(&tp, NULL);
+  long int ms = tp.tv_sec * 1000 + tp.tv_usec / 1000;
+  return DEFDIR + std::to_string(ms) + ".jpeg";
+}
+
+std::string fnameToLat(std::string fname){
+	//[A,B,E,K,M,H,0,P,C,T,Y,X]
+	//setlocale( LC_CTYPE, "rus" );
+	std::map <char,char> cirToLat = 	{{'а', 'A'},
+	                                 {'в', 'B'},
+	                                 {'е', 'E'},
+	                                 {'к', 'K'},
+									 {'м', 'M'},
+									 {'н', 'H'},
+									 {'о', '0'},
+									 {'р', 'P'},
+									 {'с', 'C'},
+									 {'т', 'T'},
+									 {'у', 'Y'},
+									 {'х', 'X'}
+	};
+
+	std::size_t foundSlash = fname.find_last_of("/\\");
+	if (foundSlash != std::string::npos) {
+		fname = fname.substr(foundSlash + 1);
+	}
+
+	std::size_t foundDot = fname.find_last_of(".");
+	if (foundDot != std::string::npos) {
+		fname = fname.substr(0, foundDot);
+	}
+
+	std::string newName;
+	for (unsigned int i = 0; i < fname.size(); ++i) {
+		std::map<char,char>::iterator it = cirToLat.find(fname[i]);
+
+		if (it != cirToLat.end()) {
+		   //element found;
+			char latCh = it->second;
+		   //fname.replace(i, 1, latCh);
+			newName.push_back(latCh);
+		} else if ((fname[i] >= '0' && fname[i] <= '9') || (fname[i] >= 'A' && fname[i] <= 'Z') || (fname[i] >= 'a' && fname[i] <= 'z') || fname[i] == '.') {
+			newName.push_back(fname[i]);
+		}
+
+	}
+	return newName;
 }
 

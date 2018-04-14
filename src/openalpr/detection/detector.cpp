@@ -69,10 +69,14 @@ namespace alpr
     
     if (frame.channels() > 2)
     {
+    	if (config->debugDetector)
+    	              cout << "DETECTOR: frame.channels() > 2" << endl;
       cvtColor( frame, frame_gray, CV_BGR2GRAY );
     }
     else
     {
+    	if (config->debugDetector)
+    	    	              cout << "DETECTOR: frame.channels() <= 2" << endl;
       frame.copyTo(frame_gray);
     }
 
@@ -107,7 +111,9 @@ namespace alpr
           (roi.height < config->minPlateSizeHeightPx))
         continue;
       
+      //displayImage(config, "Detector: frame_gray", frame_gray);
       Mat cropped = frame_gray(roi);
+      //displayImage(config, "Detector: cropped", cropped);
 
       int w = cropped.size().width;
       int h = cropped.size().height;
@@ -119,13 +125,31 @@ namespace alpr
         resize(cropped, cropped, Size(w * scale_factor, h * scale_factor));
 
     
-      float maxWidth = ((float) w) * (config->maxPlateWidthPercent / 100.0f) * scale_factor;
-      float maxHeight = ((float) h) * (config->maxPlateHeightPercent / 100.0f) * scale_factor;
+      //float maxWidth = ((float) w) * (config->maxPlateWidthPercent / 100.0f) * scale_factor;
+      //float maxHeight = ((float) h) * (config->maxPlateHeightPercent / 100.0f) * scale_factor;
+      float maxWidth = config->plateWidthMM;
+float maxHeight =  config->plateHeightMM;
+
       Size minPlateSize(config->minPlateSizeWidthPx, config->minPlateSizeHeightPx);
       Size maxPlateSize(maxWidth, maxHeight);
-    
+
+      if (config->debugDetector) {
+              cout << "DETECTOR: cropped.size().width=" << w << ", cropped.size().height=" << h << ", roi.x=" << roi.x << ", roi.y=" << roi.y << endl;
+              cout << "DETECTOR: scale_factor=" << scale_factor << ", maxWidth=" << maxWidth << ", maxHeight=" << maxHeight << endl;
+
+      }
       vector<Rect> allRegions = find_plates(cropped, minPlateSize, maxPlateSize);
       
+//      if (config->debugPlateCorners) {
+//		  Mat debugImg(cropped.size(), cropped.type());
+//		  cropped.copyTo(debugImg);
+//		  for (unsigned int idx = 0; idx < allRegions.size(); idx++)
+//                {
+//                  rectangle(debugImg, allRegions[idx], Scalar(0, 0, 0));
+//                }
+//		  displayImage(config, "find_plates", debugImg);
+//      }
+
       // Aggregate the Rect regions into a hierarchical representation
       for( unsigned int i = 0; i < allRegions.size(); i++ )
       {
@@ -154,6 +178,16 @@ namespace alpr
           regions_not_masked.push_back(allRegions[i]);
       }
       
+//      if (config->debugPlateCorners) {
+//      		  Mat debugImg(frame.size(), frame.type());
+//      		frame.copyTo(debugImg);
+//      		  for (unsigned int idx = 0; idx < regions_not_masked.size(); idx++)
+//                      {
+//                        rectangle(debugImg, regions_not_masked[idx], Scalar(255, 255, 255));
+//                      }
+//      		  displayImage(config, "find_plates 1", debugImg);
+//            }
+
       vector<PlateRegion> orderedRegions = aggregateRegions(regions_not_masked);
 
       

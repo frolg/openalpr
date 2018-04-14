@@ -48,8 +48,10 @@ namespace alpr
 
     private:
 
+      std::vector<OcrChar> recognize_line_as_text(cv::Mat threshold);
+
       std::vector<OcrChar> recognize_line(int line_index, PipelineData* pipeline_data);
-      void segment(PipelineData* pipeline_data);
+      //void segment(PipelineData* pipeline_data);
     
       tesseract::TessBaseAPI tesseract;
 

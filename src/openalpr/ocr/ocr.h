@@ -30,6 +30,7 @@ namespace alpr
     std::string letter;
     int char_index;
     float confidence;
+    cv::Rect rect;
   };
   
   class OCR {
@@ -38,12 +39,14 @@ namespace alpr
     virtual ~OCR();
 
     void performOCR(PipelineData* pipeline_data);
+    //std::vector<cv::Rect> getCharRects(PipelineData* pipeline_data);
 
     PostProcess postProcessor;
 
   protected:
     virtual std::vector<OcrChar> recognize_line(int line_index, PipelineData* pipeline_data)=0;
-    virtual void segment(PipelineData* pipeline_data)=0;
+    //virtual void segment(PipelineData* pipeline_data)=0;
+    virtual std::vector<OcrChar> recognize_line_as_text(cv::Mat threshold)=0;
     
     Config* config;
 

@@ -48,7 +48,22 @@ namespace alpr
     LineFinder(PipelineData* pipeline_data);
     virtual ~LineFinder();
 
+//    std::vector<std::vector<cv::Point> > findLinesBak(cv::Mat image, const TextContours contours);
     std::vector<std::vector<cv::Point> > findLines(cv::Mat image, const TextContours contours);
+
+    double xbarTop = 0;
+	double ybarTop = 0;
+	double sumXXTop = 0;
+	double sumXYTop = 0;
+	double sumXTop = 0;
+	double sumYTop = 0;
+
+	double xbarBottom = 0;
+	double ybarBottom = 0;
+	double sumXXBottom = 0;
+	double sumXYBottom = 0;
+	double sumXBottom = 0;
+	double sumYBottom = 0;
   private:
     PipelineData* pipeline_data;
 
@@ -58,11 +73,21 @@ namespace alpr
     // Extends the top and bottom lines to the left and right edge of the image.  Returns 4 points, counter clockwise.
     std::vector<cv::Point> extendToEdges(cv::Size imageSize, std::vector<cv::Point> charArea);
 
-    
+    std::vector<cv::Point> extendToEdgesAndPoints(cv::Size imageSize, std::vector<cv::Point> charArea, cv::Point topPoint, cv::Point bottomPoint);
+
+    std::vector<cv::Point> extendToEdgesAndPoints(cv::Size imageSize, std::vector<cv::Point> charArea, const TextContours contours);
+
+
     std::vector<cv::Point> findNextBestLine(cv::Size imageSize, std::vector<cv::Point> bestLine);
+
     // Gets a polygon that covers the entire area we wish to run a horizontal histogram over
     // This needs to be done to handle rotation/skew
     std::vector<cv::Point> calculateCroppedRegionForHistogram(cv::Size imageSize, std::vector<cv::Point> charArea);
+
+    double predict(double x, double sumXX, double sumXY, double sumX, double sumY, int n);
+
+    void addData(double x, double y, int n, bool isTop);
+
   };
 }
 

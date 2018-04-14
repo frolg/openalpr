@@ -27,6 +27,7 @@ namespace alpr
   {
     cv::Rect rect;
     std::vector<PlateRegion> children;
+    cv::Mat frame;
   };
   
 }

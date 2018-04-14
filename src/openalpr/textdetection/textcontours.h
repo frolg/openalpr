@@ -51,7 +51,7 @@ namespace alpr
     cv::Mat drawDebugImage(cv::Mat baseImage) const;
 
   private:
-
+    //static bool compareContourAreas ( std::vector<cv::Point> contour1, std::vector<cv::Point> contour2 );
 
   };
 

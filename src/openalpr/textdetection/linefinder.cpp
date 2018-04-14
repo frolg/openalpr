@@ -38,47 +38,466 @@ namespace alpr
   LineFinder::~LineFinder() {
   }
 
+//  vector<vector<Point> > LineFinder::findLinesBak(Mat image, const TextContours contours)
+//  {
+//    const float MIN_AREA_TO_IGNORE = 0.65;
+//
+//    vector<vector<Point> > linesFound;
+//
+//    cvtColor(image, image, CV_GRAY2BGR);
+//
+//    vector<CharPointInfo> charPoints;
+//    unsigned int minX = 0;
+//    unsigned int topY = 0;
+//    unsigned int maxX = 0;
+//    unsigned int bottomY = 0;
+//
+//    unsigned int leftBottomY = 0;
+//    unsigned int rightBottomY = 0;
+//    unsigned int leftTopY = 0;
+//    unsigned int rightTopY = 0;
+//    unsigned int maxHeight = 0;
+//
+//    /*double sumxTop = 0;
+//	  double sumyTop = 0;
+//	  double sumx2Top = 0;
+//	  double sumxyTop = 0;
+//
+//
+//	  double sumxBottom = 0;
+//	  double sumyBottom = 0;
+//	  double sumx2Bottom = 0;
+//	  double sumxyBottom = 0;*/
+//
+//    bool isFirst = true;
+//
+//    for (unsigned int i = 0; i < contours.contours.size(); i++)
+//        {
+//        	if (pipeline_data->config->debugCharAnalysis) {
+//        		Rect ra(boundingRect(contours.contours[i]));
+//        	    cout << "LINEFINDER contours[" << i << "]: goodIndices=" << contours.goodIndices[i] << ", x=" << ra.x << ", y=" << ra.y << ", width=" << ra.width << ", height=" << ra.height << endl;
+//        	}
+//          if (contours.goodIndices[i] == false)
+//            continue;
+//
+//          CharPointInfo cpi = CharPointInfo(contours.contours[i], i);
+//
+//          if (cpi.boundingBox.height > maxHeight) {
+//        	  maxHeight = cpi.boundingBox.height;
+//          }
+//
+//
+//          if (isFirst) {
+//        	  minX = cpi.boundingBox.x;
+//        	  bottomY = cpi.boundingBox.y + cpi.boundingBox.height;
+//        	  topY = cpi.boundingBox.y;
+//        	  leftBottomY = cpi.boundingBox.y + cpi.boundingBox.height;
+//        	  leftTopY = cpi.boundingBox.y;
+//        	  isFirst = false;
+//          } else {
+//        	  maxX = cpi.boundingBox.x + cpi.boundingBox.width;
+//        	  rightBottomY = cpi.boundingBox.y + cpi.boundingBox.height;
+//        	  rightTopY = cpi.boundingBox.y;
+//        	  if (cpi.boundingBox.y + cpi.boundingBox.height > bottomY) {
+//        		  bottomY = cpi.boundingBox.y + cpi.boundingBox.height;
+//    		}
+//    		if (cpi.boundingBox.y < topY) {
+//    			topY = cpi.boundingBox.y;
+//    		}
+//          }
+//
+//        }
+//
+//
+//    for (unsigned int i = 0; i < contours.contours.size(); i++)
+//    {
+//    	if (pipeline_data->config->debugCharAnalysis) {
+//    		Rect ra(boundingRect(contours.contours[i]));
+//    	    cout << "LINEFINDER contours[" << i << "]: goodIndices=" << contours.goodIndices[i] << ", x=" << ra.x << ", y=" << ra.y << ", width=" << ra.width << ", height=" << ra.height << endl;
+//    	}
+//      if (contours.goodIndices[i] == false)
+//        continue;
+//
+//
+//      CharPointInfo cpi = CharPointInfo(contours.contours[i], i);
+//      charPoints.push_back( cpi );
+//
+//      /*if (isFirst) {
+//          	  minX = cpi.bottom.x;
+//          	  minY = cpi.bottom.y;
+//          	maxX = cpi.top.x;
+//          	maxY = cpi.top.y;
+//            } else {
+//            	if (cpi.bottom.x < minX) {
+//            		minX = cpi.bottom.x;
+//            	}
+//            	if (cpi.top.x > maxX) {
+//            		maxX = cpi.top.x;
+//            	}
+//            	if (cpi.bottom.y > minY) {
+//					minY = cpi.bottom.y;
+//				}
+//				if (cpi.top.y < maxY) {
+//					maxY = cpi.top.y;
+//				}
+//            }*/
+//
+//          /*sumxTop += cpi.top.x;
+//          sumyTop += cpi.top.y;
+//          sumx2Top += cpi.top.x * cpi.top.x;
+//          sumxyTop += cpi.top.x * cpi.top.y;
+//
+//          sumxBottom += cpi.bottom.x;
+//			sumyBottom += cpi.bottom.y;
+//			sumx2Bottom += cpi.bottom.x * cpi.bottom.x;
+//			sumxyBottom += cpi.bottom.x * cpi.bottom.y;*/
+//if (bottomY - (cpi.boundingBox.y + cpi.boundingBox.height) < maxHeight*0.9) {
+//	addData(cpi.boundingBox.x, cpi.boundingBox.y + cpi.boundingBox.height, i, false);
+//	      addData(cpi.boundingBox.x + cpi.boundingBox.width, cpi.boundingBox.y + cpi.boundingBox.height, i, false);
+//}
+//if (cpi.boundingBox.y - topY < maxHeight*0.9) {
+//      addData(cpi.boundingBox.x, cpi.boundingBox.y, i, true);
+//      addData(cpi.boundingBox.x + cpi.boundingBox.width, cpi.boundingBox.y, i, true);
+//}
+//
+//
+//
+//    }
+//
+//    /*int n = contours.contours.size();
+//    double aTop = (n*sumxyTop - (sumxTop*sumyTop)) / (n*sumx2Top - sumxTop*sumxTop);
+//    double bTop = (sumyTop - aTop*sumxTop) / n;
+//
+//    double aBottom = (n*sumxyBottom - (sumxBottom*sumyBottom)) / (n*sumx2Bottom - sumxBottom*sumxBottom);
+//    double bBottom = (sumyBottom - aBottom*sumxBottom) / n;*/
+//
+//
+//
+//    /*if (pipeline_data->config->debugCharAnalysis) {
+//		Mat debugImg(image.size(), image.type());
+//		image.copyTo(debugImg);
+//		for (unsigned int i = 0; i < charPoints.size(); i++) {
+//			rectangle(debugImg, charPoints[i].boundingBox, Scalar(0, 255, 0));
+//			//line(debugImg, topLeft, topRight, Scalar(255,0,255), 2);
+//			//line(debugImg, bottomLeft, bottomRight, Scalar(255,0,255), 2);
+//			  /////////charheights.push_back(charPoints[i].boundingBox.height);
+//		}
+//		displayImage(pipeline_data->config, "LINEFINDER 11", debugImg);
+//	}*/
+//
+//    vector<Point> extended;
+//
+//    Point topLeft 		= Point(minX, predict(minX, sumXXTop, sumXYTop, sumXTop, sumYTop, contours.contours.size()));
+//    Point topRight 		= Point(maxX, predict(minX, sumXXTop, sumXYTop, sumXTop, sumYTop, contours.contours.size()));
+//    Point bottomRight 	= Point(maxX, predict(maxX, sumXXBottom, sumXYBottom, sumXBottom, sumYBottom, contours.contours.size()));
+//    Point bottomLeft 	= Point(minX, predict(minX, sumXXBottom, sumXYBottom, sumXBottom, sumYBottom, contours.contours.size()));
+//
+//
+//    /*LineSegment top(Point(minX, leftTopY), Point(maxX, rightTopY));
+//    LineSegment bottom(Point(minX, leftBottomY), Point(maxX, rightBottomY));
+//    int diffBottomY = 0;
+//    int maxY = max(leftBottomY, bottomY, rightBottomY);
+//    if (maxY == bottomY) {
+//		if (leftBottomY < rightBottomY) {
+//			diffBottomY = bottomY - leftBottomY;
+//		} else {
+//			diffBottomY = bottomY - rightBottomY;
+//		}
+//    }
+//    int diffTopY = 0;
+//	int minY = min(leftTopY, topY, rightTopY);
+//	if (minY == topY) {
+//		if (leftTopY < rightTopY) {
+//			diffTopY = topY - leftTopY;
+//		} else {
+//			diffTopY = topY - rightTopY;
+//		}
+//	}
+//	LineSegment parallelBot = top.getParallelLine(-1*diffBottomY);
+//	LineSegment parallelTop = bottom.getParallelLine(medianCharHeight);*/
+//
+//    if (pipeline_data->config->debugCharAnalysis) {
+//        cout << "LINEFINDER: minX=" << minX << ", maxX=" << maxX << ", topY=" << topY << ", bottomY=" << bottomY << endl;
+//        cout << "LINEFINDER topLeft[" << topLeft.x << ", " << topLeft.y << "]" << endl;
+//        cout << "LINEFINDER topRight[" << topRight.x << ", " << topRight.y << "]" << endl;
+//        cout << "LINEFINDER bottomLeft[" << bottomLeft.x << ", " << bottomLeft.y << "]" << endl;
+//        cout << "LINEFINDER bottomRight[" << bottomRight.x << ", " << bottomRight.y << "]" << endl;
+//    }
+//	/*Point topLeft 		= Point(minX, minX*aTop + bTop);
+//	Point topRight 		= Point(maxX, maxX*aTop + bTop);
+//	Point bottomRight 	= Point(maxX, maxX*aBottom + bBottom);
+//	Point bottomLeft 	= Point(minX, minX*aBottom + bBottom);*/
+//
+//	extended.push_back(topLeft);
+//	extended.push_back(topRight);
+//	extended.push_back(bottomRight);
+//	extended.push_back(bottomLeft);
+//
+//	linesFound.push_back(extended);
+//
+//
+//	if (pipeline_data->config->debugCharAnalysis) {
+//			Mat debugImg(image.size(), image.type());
+//			image.copyTo(debugImg);
+//			for (unsigned int i = 0; i < charPoints.size(); i++) {
+//				rectangle(debugImg, charPoints[i].boundingBox, Scalar(0, 255, 0));
+//				line(debugImg, topLeft, topRight, Scalar(255,0,255), 1);
+//				line(debugImg, bottomLeft, bottomRight, Scalar(255,0,255), 1);
+//				  //charheights.push_back(charPoints[i].boundingBox.height);
+//			}
+//			displayImage(pipeline_data->config, "LINEFINDER 11", debugImg);
+//		}
+//
+//	return linesFound;
+//
+//
+//    /*vector<Point> extended;
+//
+//	Point topLeft 		= Point(minX, maxY);
+//	Point topRight 		= Point(maxX, maxY);
+//	Point bottomRight 	= Point(maxX, minY);
+//	Point bottomLeft 	= Point(minX, minY);
+//
+//	extended.push_back(topLeft);
+//	extended.push_back(topRight);
+//	extended.push_back(bottomRight);
+//	extended.push_back(bottomLeft);
+//
+//	linesFound.push_back(extended);
+//
+//
+//    if (pipeline_data->config->debugCharAnalysis) {
+//        	Mat debugImg(image.size(), image.type());
+//        	image.copyTo(debugImg);
+//        	for (unsigned int i = 0; i < charPoints.size(); i++) {
+//        		rectangle(debugImg, charPoints[i].boundingBox, Scalar(0, 255, 0));
+//        		line(debugImg, topLeft, topRight, Scalar(255,0,255), 2);
+//        		line(debugImg, bottomLeft, bottomRight, Scalar(255,0,255), 2);
+//        	      //charheights.push_back(charPoints[i].boundingBox.height);
+//        	}
+//        	displayImage(pipeline_data->config, "LINEFINDER 11", debugImg);
+//        }
+//
+//    return linesFound;*/
+//
+//    /*
+//    //orig
+//    vector<Point> bestCharArea = getBestLine(contours, charPoints);
+//    vector<Point> bestLine = extendToEdges(Size(contours.width, contours.height), bestCharArea);
+//
+//    if (bestLine.size() > 0)
+//      linesFound.push_back(bestLine);
+//
+//    if (pipeline_data->isMultiline && bestCharArea.size() > 0)
+//    {
+//
+//      vector<Point> next_best_line = findNextBestLine(Size(contours.width, contours.height), bestCharArea);
+//
+//      if (next_best_line.size() > 0)
+//      {
+//        vector<Point> next_best_line_extended = extendToEdges(Size(contours.width, contours.height), next_best_line);
+//        linesFound.push_back(next_best_line_extended);
+//      }
+//
+//
+//    }
+//
+//
+//    return linesFound;*/
+//  }
+
+
+
   vector<vector<Point> > LineFinder::findLines(Mat image, const TextContours contours)
-  {
-    const float MIN_AREA_TO_IGNORE = 0.65;
-
-    vector<vector<Point> > linesFound;
-
-    cvtColor(image, image, CV_GRAY2BGR);
-
-    vector<CharPointInfo> charPoints;
-
-    for (unsigned int i = 0; i < contours.contours.size(); i++)
     {
-      if (contours.goodIndices[i] == false)
-        continue;
+      const float MIN_AREA_TO_IGNORE = 0.65;
 
-      charPoints.push_back( CharPointInfo(contours.contours[i], i) );
-    }
+      vector<vector<Point> > linesFound;
 
-    vector<Point> bestCharArea = getBestLine(contours, charPoints);
-    vector<Point> bestLine = extendToEdges(Size(contours.width, contours.height), bestCharArea);
-            
-    if (bestLine.size() > 0)
-      linesFound.push_back(bestLine);
+      cvtColor(image, image, CV_GRAY2BGR);
 
-    if (pipeline_data->isMultiline && bestCharArea.size() > 0)
-    {
+      vector<CharPointInfo> charPoints;
+      Point top;
+      Point bottom;
+      bool isFirst = true;
 
-      vector<Point> next_best_line = findNextBestLine(Size(contours.width, contours.height), bestCharArea);
-      
-      if (next_best_line.size() > 0)
+      for (unsigned int i = 0; i < contours.contours.size(); i++)
+	  {
+		if (pipeline_data->config->debugCharAnalysis) {
+			Rect ra(boundingRect(contours.contours[i]));
+			cout << "LINEFINDER contours[" << i << "]: goodIndices=" << contours.goodIndices[i] << ", x=" << ra.x << ", y=" << ra.y << ", width=" << ra.width << ", height=" << ra.height << endl;
+		}
+		if (contours.goodIndices[i] == false)
+		  continue;
+
+		CharPointInfo cpi = CharPointInfo(contours.contours[i], i);
+
+		if (isFirst) {
+			top = Point(cpi.top.x, cpi.top.y);
+			bottom = Point(cpi.bottom.x, cpi.bottom.y);
+			isFirst = false;
+		} else {
+		  if (cpi.bottom.y > bottom.y) {
+			  bottom = Point(cpi.bottom.x, cpi.bottom.y);
+		  }
+		  if (cpi.top.y < top.y) {
+			top = Point(cpi.top.x, cpi.top.y);
+		  }
+
+		}
+
+	  }
+
+
+      for (unsigned int i = 0; i < contours.contours.size(); i++)
       {
-        vector<Point> next_best_line_extended = extendToEdges(Size(contours.width, contours.height), next_best_line);
-        linesFound.push_back(next_best_line_extended);
-      }
-      
+//      	if (pipeline_data->config->debugCharAnalysis) {
+//      		Rect ra(boundingRect(contours.contours[i]));
+//      	    cout << "LINEFINDER contours[" << i << "]: goodIndices=" << contours.goodIndices[i] << ", x=" << ra.x << ", y=" << ra.y << ", width=" << ra.width << ", height=" << ra.height << endl;
+//      	}
+        if (contours.goodIndices[i] == false)
+          continue;
 
+
+        CharPointInfo cpi = CharPointInfo(contours.contours[i], i);
+        charPoints.push_back( cpi );
+      }
+
+      //orig
+      vector<Point> bestCharArea = getBestLine(contours, charPoints);
+
+      for (unsigned int i = 0; i < contours.contours.size(); i++)
+            {
+//            	if (pipeline_data->config->debugCharAnalysis) {
+//            		Rect ra(boundingRect(contours.contours[i]));
+//            	    cout << "LINEFINDER contours[" << i << "]: goodIndices=" << contours.goodIndices[i] << ", x=" << ra.x << ", y=" << ra.y << ", width=" << ra.width << ", height=" << ra.height << endl;
+//            	}
+              if (contours.goodIndices[i] == false)
+                continue;
+
+
+              CharPointInfo cpi = CharPointInfo(contours.contours[i], i);
+              charPoints.push_back( cpi );
+            }
+
+      //vector<Point> bestLine = extendToEdgesAndPoints(Size(contours.width, contours.height), bestCharArea, top, bottom);
+      vector<Point> bestLine = extendToEdgesAndPoints(Size(contours.width, contours.height), bestCharArea, contours);
+
+      if (bestLine.size() > 0)
+        linesFound.push_back(bestLine);
+
+      if (pipeline_data->isMultiline && bestCharArea.size() > 0)
+      {
+
+        vector<Point> next_best_line = findNextBestLine(Size(contours.width, contours.height), bestCharArea);
+
+        if (next_best_line.size() > 0)
+        {
+          vector<Point> next_best_line_extended = extendToEdges(Size(contours.width, contours.height), next_best_line);
+          linesFound.push_back(next_best_line_extended);
+        }
+
+
+      }
+      if (pipeline_data->config->debugCharAnalysis) {
+      			Mat debugImg(image.size(), image.type());
+      			image.copyTo(debugImg);
+      			for (unsigned int i = 0; i < charPoints.size(); i++) {
+      				rectangle(debugImg, charPoints[i].boundingBox, Scalar(0, 255, 0));
+      				line(debugImg, bestLine[0], bestLine[1], Scalar(255,0,255), 1);
+      				line(debugImg, bestLine[3], bestLine[2], Scalar(255,0,255), 1);
+      				  //charheights.push_back(charPoints[i].boundingBox.height);
+      			}
+      			displayImage(pipeline_data->config, "LINEFINDER 11", debugImg);
+      		}
+
+      return linesFound;
     }
 
+  void LineFinder::addData(double x, double y, int n, bool isTop) {
+	  if (isTop) {
+	  if (n == 0) {
+			  xbarTop = x;
+			  ybarTop = y;
+		  } else {
+				  double fact1 = 1.0 + n;
+				  double fact2 = n / (1.0 + n);
+				  double dx = x - xbarTop;
+				  double dy = y - ybarTop;
+				  sumXXTop += dx * dx * fact2;
+				  //sumYY += dy * dy * fact2;
+				  sumXYTop += dx * dy * fact2;
+				  xbarTop += dx / fact1;
+				  ybarTop += dy / fact1;
+		   }
+		  sumXTop += x;
+		  sumYTop += y;
+	  } else {
 
-    return linesFound;
-  }
+		if (n == 0) {
+		  xbarBottom = x;
+		  ybarBottom = y;
+		  } else {
+				  double fact1 = 1.0 + n;
+				  double fact2 = n / (1.0 + n);
+				  double dx = x - xbarBottom;
+				  double dy = y - ybarBottom;
+				  sumXXBottom += dx * dx * fact2;
+				  //sumYY += dy * dy * fact2;
+				  sumXYBottom += dx * dy * fact2;
+				  xbarBottom += dx / fact1;
+				  ybarBottom += dy / fact1;
+		   }
+		  sumXBottom += x;
+		  sumYBottom += y;
+	  }
+    }
+
+    double LineFinder::predict(double x, double sumXX, double sumXY, double sumX, double sumY, int n) {
+		double b1 = sumXY / sumXX;
+		return (sumY - b1 * sumX) / n + b1 * x;
+	}
+
+//  void getApprox(double **x, double *a, double *b, int n) {
+//    double sumx = 0;
+//    double sumy = 0;
+//    double sumx2 = 0;
+//    double sumxy = 0;
+//    for (int i = 0; i<n; i++) {
+//      sumx += x[0][i];
+//      sumy += x[1][i];
+//      sumx2 += x[0][i] * x[0][i];
+//      sumxy += x[0][i] * x[1][i];
+//    }
+//    *a = (n*sumxy - (sumx*sumy)) / (n*sumx2 - sumx*sumx);
+//    *b = (sumy - *a*sumx) / n;
+//    return;
+//  }
+
+    /*void LineFinder::addData(double x, double y, int n, bool isTop) {
+    	if (pipeline_data->config->debugCharAnalysis) {
+    		if (isTop)
+    	        cout << "LINEFINDER: addData (top): [" << x << ", " << y << "]" << endl;
+    		else
+    			cout << "LINEFINDER: addData (bottom): [" << x << ", " << y << "]" << endl;
+    	    }
+    	if (isTop) {
+    		sumXTop += x;
+    		sumYTop += y;
+    		sumXXTop += x*x;
+		    sumXYTop += x*y;
+		  } else {
+			sumXBottom += x;
+			sumYBottom += y;
+			sumXXBottom += x*x;
+			sumXYBottom += x*y;
+		  }
+    }
+
+    double LineFinder::predict(double x, double sumXX, double sumXY, double sumX, double sumY, int n) {
+		double a = (n*sumXY - (sumX*sumY)) / (n*sumXX - sumX*sumX);
+		return (sumY - a * sumX) / n + a * x;
+	}*/
 
   std::vector<cv::Point> LineFinder::calculateCroppedRegionForHistogram(cv::Size imageSize, std::vector<cv::Point> charArea) {
       
@@ -148,7 +567,7 @@ namespace alpr
       int transformed_best_line_start = round(transformed_best_line[0].y);
       int transformed_best_line_end = round(transformed_best_line[3].y);
       int transformed_best_line_width = transformed_best_line_end - transformed_best_line_start;
-      int transformed_best_line_variance = (int) ((float) transformed_best_line_width) * 0.25;
+      int transformed_best_line_variance = (int) ((float) transformed_best_line_width) * 0.1;//0.25;
       
       
 
@@ -272,6 +691,7 @@ namespace alpr
       {
         cout << "Multiline = " << secondline_top.str() << " -- " << secondline_bottom.str() << endl;
         cout << "Multiline winner is: " << best_secondline_index << " on threshold " << best_secondline_threshold << endl;
+        //displayImage(pipeline_data->config, "findNextBestLine", tempImg);
       }
             
       vector<cv::Point> response;
@@ -419,7 +839,7 @@ namespace alpr
     return bestStripe;
   }
 
-  std::vector<cv::Point> LineFinder::extendToEdges(cv::Size imageSize, std::vector<cv::Point> charArea) {
+  std::vector<cv::Point> LineFinder::extendToEdgesAndPoints(cv::Size imageSize, std::vector<cv::Point> charArea, Point topPoint, Point bottomPoint) {
     
     vector<Point> extended;
     
@@ -429,11 +849,36 @@ namespace alpr
             
     LineSegment top(charArea[0], charArea[1]);
     LineSegment bottom(charArea[3], charArea[2]);
-    
-    Point topLeft 		= Point(0, top.getPointAt(0) );
-    Point topRight 		= Point(imageSize.width, top.getPointAt(imageSize.width));
-    Point bottomRight 	= Point(imageSize.width, bottom.getPointAt(imageSize.width));
-    Point bottomLeft 	= Point(0, bottom.getPointAt(0));
+    LineSegment parallelTop;
+    LineSegment parallelBottom;
+
+    Point pointOnTopLine(topPoint.x, top.getPointAt(topPoint.x));
+    if (pointOnTopLine.y - topPoint.y > 0) {
+    	parallelTop = top.getParallelLine(pointOnTopLine.y - topPoint.y);
+    	if (pipeline_data->config->debugCharAnalysis)
+    	      cout << "LINEFINDER move best TOP line, diff=: " << (pointOnTopLine.y - topPoint.y) << endl;
+
+    } else {
+    	parallelTop = LineSegment(charArea[0], charArea[1]);
+    	if (pipeline_data->config->debugCharAnalysis)
+    	      cout << "LINEFINDER best TOP line should not be changed: topPoint.y=" << topPoint.y << ", pointOnTopLine.y=" << pointOnTopLine.y << endl;
+    }
+
+    Point pointOnBottomLine(bottomPoint.x, bottom.getPointAt(bottomPoint.x));
+	if (pointOnBottomLine.y - bottomPoint.y < 0) {
+		parallelBottom = bottom.getParallelLine(pointOnBottomLine.y - bottomPoint.y);
+		if (pipeline_data->config->debugCharAnalysis)
+		    cout << "LINEFINDER move best BOTTOM line, diff=: " << (pointOnBottomLine.y - bottomPoint.y) << endl;
+	} else {
+		parallelBottom = LineSegment(charArea[3], charArea[2]);
+		if (pipeline_data->config->debugCharAnalysis)
+		    	      cout << "LINEFINDER best BOTTOM line should not be changed: bottomPoint.y=" << bottomPoint.y << ", pointOnBottomLine.y=" << pointOnBottomLine.y << endl;
+	}
+
+    Point topLeft 		= Point(0, parallelTop.getPointAt(0));
+    Point topRight 		= Point(imageSize.width, parallelTop.getPointAt(imageSize.width));
+    Point bottomRight 	= Point(imageSize.width, parallelBottom.getPointAt(imageSize.width));
+    Point bottomLeft 	= Point(0, parallelBottom.getPointAt(0));
 
     extended.push_back(topLeft);
     extended.push_back(topRight);
@@ -443,6 +888,114 @@ namespace alpr
     return extended;
   }
   
+  std::vector<cv::Point> LineFinder::extendToEdgesAndPoints(cv::Size imageSize, std::vector<cv::Point> charArea, const TextContours contours) {
+	  vector<Point> extended;
+
+
+	  if (charArea.size() < 4)
+		return extended;
+
+	  LineSegment top(charArea[0], charArea[1]);
+	  LineSegment bottom(charArea[3], charArea[2]);
+	  LineSegment parallelTop = LineSegment(charArea[0], charArea[1]);
+	  LineSegment parallelBottom = LineSegment(charArea[3], charArea[2]);
+
+	  if (pipeline_data->config->debugCharAnalysis)
+	  	cout << "LINEFINDER initial parallelTop[(" << parallelTop.p1.x << ", " << parallelTop.p1.y << "), (" << parallelTop.p2.x << ", " << parallelTop.p2.y << ")]" << endl;
+
+	  unsigned int goodIndicesQty = 0;
+	  int sumHeight = 0;
+
+	  for (unsigned int i = 0; i < contours.contours.size(); i++)
+	  {
+		if (contours.goodIndices[i] == false)
+		  continue;
+
+		goodIndicesQty++;
+
+		CharPointInfo cpi = CharPointInfo(contours.contours[i], i);
+		sumHeight += cpi.boundingBox.height;
+
+		Point pointOnTopLine(cpi.top.x, parallelTop.getPointAt(cpi.top.x));
+		  if (pointOnTopLine.y - cpi.top.y > 0) {
+			parallelTop = parallelTop.getParallelLine(pointOnTopLine.y - cpi.top.y);
+			if (pipeline_data->config->debugCharAnalysis)
+				  cout << "LINEFINDER move best TOP line for goodIndices[" << goodIndicesQty << "], diff=: " << (pointOnTopLine.y - cpi.top.y) << endl;
+
+		  } else {
+			if (pipeline_data->config->debugCharAnalysis)
+				  cout << "LINEFINDER best TOP line should not be changed for goodIndices[" << goodIndicesQty << "]: cpi.top.y=" << cpi.top.y << ", pointOnTopLine.y=" << pointOnTopLine.y << endl;
+		  }
+
+		Point pointOnBottomLine(cpi.bottom.x, parallelBottom.getPointAt(cpi.bottom.x));
+		if (pointOnBottomLine.y - cpi.bottom.y < 0) {
+			parallelBottom = parallelBottom.getParallelLine(pointOnBottomLine.y - cpi.bottom.y);
+			if (pipeline_data->config->debugCharAnalysis)
+				cout << "LINEFINDER move best BOTTOM line for goodIndices[" << goodIndicesQty << "], diff=: " << (pointOnBottomLine.y - cpi.bottom.y) << endl;
+		} else {
+			if (pipeline_data->config->debugCharAnalysis)
+						  cout << "LINEFINDER best BOTTOM line should not be changed for goodIndices[" << goodIndicesQty << ": cpi.bottom.y=" << cpi.bottom.y << ", pointOnBottomLine.y=" << pointOnBottomLine.y << endl;
+		}
+
+	  }
+//	  Point topLeft 		= Point(0, parallelTop.getPointAt(0));
+//	  Point topRight 		= Point(imageSize.width, parallelTop.getPointAt(imageSize.width));
+//	  Point bottomRight 	= Point(imageSize.width, parallelBottom.getPointAt(imageSize.width));
+//	  Point bottomLeft 	= Point(0, parallelBottom.getPointAt(0));
+
+	    float avgCharHeight = sumHeight / goodIndicesQty;
+	    int expandY = round(0.1*avgCharHeight);
+	    LineSegment topLine = parallelTop.getParallelLine(expandY);
+		LineSegment bottomLine = parallelBottom.getParallelLine(-1 * expandY);
+
+//		LineSegment leftLine(Point(0,0), Point(0, expandY + h));
+//		LineSegment rightLine(Point(verticalRightOffset + w, -1 * expandY), Point(verticalRightOffset + w, expandY + h));
+//
+//		Point topLeft = topLine.intersection(leftLine);
+//		Point topRight = topLine.intersection(rightLine);
+//		Point botRight = bottomLine.intersection(rightLine);
+//		Point botLeft = bottomLine.intersection(leftLine);
+
+		Point topLeft 		= Point(0, topLine.getPointAt(0));
+		Point topRight 		= Point(imageSize.width, topLine.getPointAt(imageSize.width));
+		Point bottomRight 	= Point(imageSize.width, bottomLine.getPointAt(imageSize.width));
+		Point bottomLeft 	= Point(0, bottomLine.getPointAt(0));
+
+		if (pipeline_data->config->debugCharAnalysis)
+			  	  	cout << "LINEFINDER new parallelTop[(" << parallelTop.p1.x << ", " << parallelTop.p1.y << "), (" << parallelTop.p2.x << ", " << parallelTop.p2.y << ")]" << endl;
+
+	  extended.push_back(topLeft);
+	  extended.push_back(topRight);
+	  extended.push_back(bottomRight);
+	  extended.push_back(bottomLeft);
+
+	  return extended;
+  }
+
+  std::vector<cv::Point> LineFinder::extendToEdges(cv::Size imageSize, std::vector<cv::Point> charArea) {
+
+      vector<Point> extended;
+
+
+      if (charArea.size() < 4)
+        return extended;
+
+      LineSegment top(charArea[0], charArea[1]);
+      LineSegment bottom(charArea[3], charArea[2]);
+
+      Point topLeft 		= Point(0, top.getPointAt(0) );
+      Point topRight 		= Point(imageSize.width, top.getPointAt(imageSize.width));
+      Point bottomRight 	= Point(imageSize.width, bottom.getPointAt(imageSize.width));
+      Point bottomLeft 	= Point(0, bottom.getPointAt(0));
+
+      extended.push_back(topLeft);
+      extended.push_back(topRight);
+      extended.push_back(bottomRight);
+      extended.push_back(bottomLeft);
+
+      return extended;
+    }
+
   CharPointInfo::CharPointInfo(vector<Point> contour, int index) {
 
 

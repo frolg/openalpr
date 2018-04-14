@@ -27,7 +27,7 @@ using namespace cv;
 namespace alpr
 {
 
-  TextLine::TextLine(std::vector<cv::Point2f> textArea, std::vector<cv::Point2f> linePolygon, cv::Size imgSize) {
+  TextLine::TextLine(std::vector<cv::Point2f> textArea, std::vector<cv::Point2f> linePolygon, cv::Size imgSize, TextContours textContours) {
     std::vector<Point> textAreaInts, linePolygonInts;
 
     for (unsigned int i = 0; i < textArea.size(); i++)
@@ -35,22 +35,28 @@ namespace alpr
     for (unsigned int i = 0; i < linePolygon.size(); i++)
       linePolygonInts.push_back(Point(round(linePolygon[i].x), round(linePolygon[i].y)));
 
-    initialize(textAreaInts, linePolygonInts, imgSize);
+    initialize(textAreaInts, linePolygonInts, imgSize, textContours);
   }
 
-  TextLine::TextLine(std::vector<cv::Point> textArea, std::vector<cv::Point> linePolygon, cv::Size imgSize) {
-    initialize(textArea, linePolygon, imgSize);
+  TextLine::TextLine(std::vector<cv::Point> textArea, std::vector<cv::Point> linePolygon, cv::Size imgSize, TextContours textContours) {
+    initialize(textArea, linePolygon, imgSize, textContours);
   }
 
 
   TextLine::~TextLine() {
   }
 
+  TextLine::TextLine() {
 
 
-  void TextLine::initialize(std::vector<cv::Point> textArea, std::vector<cv::Point> linePolygon, cv::Size imgSize) {
+    }
+
+
+
+  void TextLine::initialize(std::vector<cv::Point> textArea, std::vector<cv::Point> linePolygon, cv::Size imgSize, TextContours textContours) {
     if (textArea.size() > 0)
     {
+    	this -> textContours = textContours;
       if (this->textArea.size() > 0)
         this->textArea.clear();
       if (this->linePolygon.size() > 0)
@@ -64,25 +70,27 @@ namespace alpr
       
       // Adjust the line polygon so that it always touches the edges
       // This is needed after applying perspective transforms, so just fix it here
-      if (linePolygon[0].x != 0)
-      {
-        linePolygon[0].x = 0;
-        linePolygon[0].y = topLine.getPointAt(linePolygon[0].x);
-      }
-      if (linePolygon[1].x != imgSize.width)
-      {
-        linePolygon[1].x = imgSize.width;
-        linePolygon[1].y = topLine.getPointAt(linePolygon[1].x);
-      }
-      if (linePolygon[2].x != imgSize.width)
-      {
-        linePolygon[2].x = imgSize.width;
-        linePolygon[2].y = bottomLine.getPointAt(linePolygon[2].x);
-      }
-      if (linePolygon[3].x != 0)
-      {
-        linePolygon[3].x = 0;
-        linePolygon[3].y = bottomLine.getPointAt(linePolygon[3].x);
+      if (imgSize.width > 0) {
+		  if (linePolygon[0].x != 0)
+		  {
+			linePolygon[0].x = 0;
+			linePolygon[0].y = topLine.getPointAt(linePolygon[0].x);
+		  }
+		  if (linePolygon[1].x != imgSize.width)
+		  {
+			linePolygon[1].x = imgSize.width;
+			linePolygon[1].y = topLine.getPointAt(linePolygon[1].x);
+		  }
+		  if (linePolygon[2].x != imgSize.width)
+		  {
+			linePolygon[2].x = imgSize.width;
+			linePolygon[2].y = bottomLine.getPointAt(linePolygon[2].x);
+		  }
+		  if (linePolygon[3].x != 0)
+		  {
+			linePolygon[3].x = 0;
+			linePolygon[3].y = bottomLine.getPointAt(linePolygon[3].x);
+		  }
       }
       
       
