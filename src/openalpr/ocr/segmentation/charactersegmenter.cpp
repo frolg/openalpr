@@ -572,7 +572,7 @@ namespace alpr
     const float MIN_PLATE_HEIGHT = 1.1 * avgCharHeight;
     const float MIN_PLATE_WIDTH = 8 * 1.1 * avgCharWidth;
 
-    //orig
+    //orig - removes everything outside the polygon
     Mat textLineMask = Mat::zeros(thresholds[0].size(), CV_8U);
     fillConvexPoly(textLineMask, textLine.linePolygon.data(), textLine.linePolygon.size(), Scalar(255,255,255));
 
@@ -580,6 +580,7 @@ namespace alpr
     float biggestContourArea = 0;
     vector<vector<Point> > plateContAll;
 
+    Mat lineMask;// = Mat::zeros(thresholds[0].size(), CV_8UC1);
     for (unsigned int i = 0; i < thresholds.size(); i++)
     {
 
@@ -597,19 +598,81 @@ namespace alpr
       vector<Vec4i> hierarchy;
 
       //orig
-//      Mat thresholdsCopy = Mat::zeros(thresholds[i].size(), thresholds[i].type());
-//      thresholds[i].copyTo(thresholdsCopy, textLineMask);
-//      findContours(thresholdsCopy, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE);
+      Mat thresholdsCopy = Mat::zeros(thresholds[i].size(), thresholds[i].type());
+      thresholds[i].copyTo(thresholdsCopy, textLineMask);
+      findContours(thresholdsCopy, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE);
 
       //sol
-      Mat tempThreshold(thresholds[i].size(), CV_8U);
+      //first version
+      /*Mat tempThreshold(thresholds[i].size(), CV_8U);
       thresholds[i].copyTo(tempThreshold);
-      findContours(tempThreshold, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE);
+      findContours(tempThreshold, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE);*/
 
-      Mat mask = Mat::zeros(thresholds[i].size(), CV_8UC1);
-	  //fillPoly(mask, plateContAll, cv::Scalar(255,255,255));
-	  fillConvexPoly(mask, textLine.linePolygon.data(), textLine.linePolygon.size(), Scalar(255,255,255));
-	  bitwise_and(thresholds[i], mask, thresholds[i]);
+      //Mat mask = Mat::zeros(thresholds[i].size(), CV_8UC1);
+	  //////////////////////fillPoly(mask, plateContAll, cv::Scalar(255,255,255));
+	  //fillConvexPoly(mask, textLine.linePolygon.data(), textLine.linePolygon.size(), Scalar(255,255,255));
+	  //bitwise_and(thresholds[i], mask, thresholds[i]);
+      //findContours(thresholds[i], contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE);
+
+      for (unsigned int c = 0; c < contours.size(); c++)
+            {
+              if (contours[c].size() == 0)
+                continue;
+
+              Rect mr = boundingRect(contours[c]);
+              //float rectSize = mr.height*mr.width;
+              float ctArea= contourArea(contours[c]);
+              //approxPolyDP(InputArray curve, OutputArray approxCurve, double epsilon, bool closed)
+
+              //calculate for first threshold only
+              if(i == 0 && ctArea > biggestContourArea && mr.width > MIN_PLATE_WIDTH && mr.height > MIN_PLATE_HEIGHT)
+      		{
+      			biggestContourArea = ctArea;
+      			biggestContourIdx = c;
+      		}
+            }
+
+      if (biggestContourIdx > -1 && i == 0) {
+    	  Mat masTextkLine = Mat::zeros(thresholds[i].size(), CV_8UC1);
+    	  fillConvexPoly(masTextkLine, textLine.linePolygon.data(), textLine.linePolygon.size(), Scalar(255,255,255));
+    	  //line(masTextkLine, textLine.topLine.p1, textLine.topLine.p2, cv::Scalar(255,255,255));
+
+    	  Mat maskContour = Mat::zeros(thresholds[i].size(), CV_8UC1);
+    	  //drawContours(maskContour, contours,biggestContourIdx, cv::Scalar(255,255,255),2); // with a thickness of 1
+    	  drawContours(maskContour, contours, biggestContourIdx, Scalar(255, 255, 255), -1, 8, hierarchy, 1);
+
+    	  bitwise_and(maskLinePoligon, maskContour, lineMask);
+
+    	  fillPoly(mask, plateContAll, cv::Scalar(255,255,255));
+    	                  bitwise_and(thresholds[i], mask, thresholds[i]);
+
+
+          	  RotatedRect plateBoundingBox = minAreaRect(contours[biggestContourIdx]);
+
+          	  Point2f corners[4];
+          	  plateBoundingBox.points(corners);
+
+      		  vector<Point> fillContSingle;
+      		  fillContSingle.push_back(corners[0]);
+      		  fillContSingle.push_back(corners[1]);
+      		  fillContSingle.push_back(corners[2]);
+      		  fillContSingle.push_back(corners[3]);
+      		  plateContAll.push_back(fillContSingle);
+
+      		  //fillContAll.push_back(contours[biggestContourIdx]);
+            }
+            if (biggestContourIdx > -1) {
+      		  Mat mask = Mat::zeros(thresholds[i].size(), CV_8UC1);
+                fillPoly(mask, plateContAll, cv::Scalar(255,255,255));
+                bitwise_and(thresholds[i], mask, thresholds[i]);
+
+      //          line(thresholds[i], corners[0], corners[1], cv::Scalar(255,255,255));
+      //          line(thresholds[i], corners[1], corners[2], cv::Scalar(255,255,255));
+      //          line(thresholds[i], corners[2], corners[3], cv::Scalar(255,255,255));
+      //          line(thresholds[i], corners[3], corners[0], cv::Scalar(255,255,255));
+
+            }
+
 
       for (unsigned int c = 0; c < contours.size(); c++)
       {
@@ -619,14 +682,14 @@ namespace alpr
         Rect mr = boundingRect(contours[c]);
         //float rectSize = mr.height*mr.width;
         float ctArea= contourArea(contours[c]);
-        //approxPolyDP(InputArray curve, OutputArray approxCurve, double epsilon, bool closed)
+        /////////////////approxPolyDP(InputArray curve, OutputArray approxCurve, double epsilon, bool closed)
 
         //calculate for first threshold only
-        if(i == 0 && ctArea > biggestContourArea && mr.width > MIN_PLATE_WIDTH && mr.height > MIN_PLATE_HEIGHT)
-		{
-			biggestContourArea = ctArea;
-			biggestContourIdx = c;
-		}
+//        if(i == 0 && ctArea > biggestContourArea && mr.width > MIN_PLATE_WIDTH && mr.height > MIN_PLATE_HEIGHT)
+//		{
+//			biggestContourArea = ctArea;
+//			biggestContourIdx = c;
+//		}
 
         if (mr.width > MAX_CONTOUR_WIDTH || mr.height < MIN_CONTOUR_HEIGHT || mr.width < MIN_CONTOUR_WIDTH || ctArea < MIN_CHAR_AREA)
         {

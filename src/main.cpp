@@ -68,6 +68,9 @@ static int additionalDetectedCount = 0;
 
 int main( int argc, const char** argv )
 {
+	timespec startTime;
+	getTimeMonotonic(&startTime);
+
   std::vector<std::string> filenames;
   std::string configFile = "";
   bool outputJson = false;
@@ -351,6 +354,9 @@ int main( int argc, const char** argv )
   }
 
   std::cout << "Total count: " << totalCount << ", detectedCount=" << detectedCount << ", additionalDetectedCount=" << additionalDetectedCount << std::endl;
+  timespec endTime;
+  getTimeMonotonic(&endTime);
+  std::cout << "OpenALPR Total Time: " << diffclock(startTime, endTime) << "ms." << std::endl;
 
   return 0;
 }
@@ -435,6 +441,7 @@ bool detectandshow(Alpr* alpr, cv::Mat frame, std::string region, bool writeJson
 
     for (int i = 0; i < results.plates.size(); i++)
     {
+    	std::cout << "plate" << i << " thresholdOcrLines.size()=" << results.plates[i].thresholdOcrLines.size() << std::endl;
       std::cout << "plate" << i << ": " << results.plates[i].topNPlates.size() << " results";
       if (measureProcessingTime)
         std::cout << " -- Processing Time = " << results.plates[i].processing_time_ms << "ms.";
@@ -504,11 +511,22 @@ bool detectandshow(Alpr* alpr, cv::Mat frame, std::string region, bool writeJson
     if (detected) {
     	detectedCount++;
     } else {
+    	std::cout << "NOT DETECTED" << std::endl;
+    	std::cout << "fileName.size()=" << fileName.size() << std::endl;
     	if (fileName.size() != 0) {
     	    std::string newFilename = fnameToLat(fileName);
+    	    std::cout << "newFilename=" << newFilename << std::endl;
 			for (int i = 0; i < results.plates.size(); i++) {
+				std::cout << "results.plates[" << i << "].thresholdOcrLines.size()=" << results.plates[i].thresholdOcrLines.size() << std::endl;
 				for (int k = 0; k < results.plates[i].thresholdOcrLines.size(); k++) {
-					if (results.plates[i].thresholdOcrLines[k].find(newFilename) != std::string::npos){
+					std::string s = results.plates[i].thresholdOcrLines[k];
+					std::cout << "OCR Line: " << s << std::endl;
+					s.erase(std::remove_if(
+					    begin(s), end(s),
+					    [l = std::locale{}](auto ch) { return std::isspace(ch, l); }
+					), end(s));
+					//if (results.plates[i].thresholdOcrLines[k].find(newFilename) != std::string::npos){
+					if (s.find(newFilename) != std::string::npos) {
 						additionalDetectedCount++;
 					}
 				}

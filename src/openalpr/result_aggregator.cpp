@@ -138,7 +138,7 @@ namespace alpr
       // Each cluster is the same plate, just analyzed from a slightly different 
       // perspective.  Merge them together and score them as if they are one
 
-      const float MIN_CONFIDENCE = 75;
+      const float MIN_CONFIDENCE = 50;
       
 
       // Factor in the position of the plate in the topN list, the confidence, and the template match status
@@ -246,6 +246,11 @@ namespace alpr
             copyResult.topNPlates.push_back(sorted_results[i].second.plate);
           }
           
+
+          for (int i = 0; i < firstResult.thresholdOcrLines.size(); i++) {
+        	  copyResult.thresholdOcrLines.push_back(firstResult.thresholdOcrLines[i]);
+			}
+
           response.results.plates.push_back(copyResult);
         }
 

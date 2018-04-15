@@ -316,6 +316,7 @@ namespace alpr
         }
 
         country_recognizers.ocr->performOCR(&pipeline_data);
+        //std::cout << "pipeline_data.thresholdOcrLines.size(): " << pipeline_data.thresholdOcrLines.size() << std::endl;
         for (unsigned int y = 0; y < pipeline_data.thresholdOcrLines.size(); y++) {
         	plateResult.thresholdOcrLines.push_back(pipeline_data.thresholdOcrLines[y]);
         }

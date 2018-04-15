@@ -49,15 +49,14 @@ namespace alpr
     for (unsigned int i = 0; i < pipeline_data->thresholds.size(); i++)
 	{
 		std::vector<OcrChar> ocrChars = recognize_line_as_text(pipeline_data->thresholds[i]);
-		if (this->config->debugCharSegmenter) {
 			string str;
 			for (unsigned int k = 0; k < ocrChars.size(); k++) {
 				str.append(ocrChars[k].letter);
 
 			}
+			pipeline_data->thresholdOcrLines.push_back(str);
 			if (this->config->debugCharSegmenter)
 				std::cout << "===================================== OCR LINE chars in threshols[" << i << "]: " << str << std::endl;
-		}
 	}
 
     segmenter.segment();

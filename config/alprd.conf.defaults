@@ -20,7 +20,7 @@ country = us
 analysis_threads = 4
 
 ; topn is the number of possible plate character variations to report
-topn = 10
+topn = 15
 
 ; Determines whether images that contain plates should be stored to disk
 store_plates = 0
