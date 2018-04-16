@@ -403,7 +403,7 @@ namespace alpr
 
 	//remappedCorners = imgTransform.remapSmallPointstoCrop(remappedCorners, newCrop);
 
-	vector<Point> smallPlateCorners = normalDetection(newCrop, newLines);
+	//vector<Point> smallPlateCorners = normalDetection(newCrop, newLines);
     return remappedCorners;
 
 
