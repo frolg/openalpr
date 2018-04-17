@@ -125,10 +125,10 @@ namespace alpr
         resize(cropped, cropped, Size(w * scale_factor, h * scale_factor));
 
     
-      //float maxWidth = ((float) w) * (config->maxPlateWidthPercent / 100.0f) * scale_factor;
-      //float maxHeight = ((float) h) * (config->maxPlateHeightPercent / 100.0f) * scale_factor;
-      float maxWidth = config->plateWidthMM;
-float maxHeight =  config->plateHeightMM;
+      float maxWidth = ((float) w) * (config->maxPlateWidthPercent / 100.0f) * scale_factor;
+      float maxHeight = ((float) h) * (config->maxPlateHeightPercent / 100.0f) * scale_factor;
+      //float maxWidth = config->plateWidthMM;
+      //float maxHeight =  config->plateHeightMM;
 
       Size minPlateSize(config->minPlateSizeWidthPx, config->minPlateSizeHeightPx);
       Size maxPlateSize(maxWidth, maxHeight);
@@ -139,6 +139,8 @@ float maxHeight =  config->plateHeightMM;
 
       }
       vector<Rect> allRegions = find_plates(cropped, minPlateSize, maxPlateSize);
+      if (config->debugDetector)
+          	cout << "DETECTOR: find " << allRegions.size() << " plates" << endl;
       
 //      if (config->debugPlateCorners) {
 //		  Mat debugImg(cropped.size(), cropped.type());

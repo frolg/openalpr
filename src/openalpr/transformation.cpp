@@ -82,6 +82,9 @@ namespace alpr
 
     // Get transformation matrix
     Mat transmtx = getPerspectiveTransform(corners, outputCorners);
+//    printf("--TRANSFORMATION (%g,%g), (%g,%g), (%g,%g), (%g,%g) -> (%g,%g), (%g,%g), (%g,%g), (%g,%g)\n", corners[0].x, corners[0].y, corners[1].x, corners[1].y,
+//    		corners[2].x, corners[2].y, corners[3].x, corners[3].y, outputCorners[0].x, outputCorners[0].y, outputCorners[1].x, outputCorners[1].y,
+//			outputCorners[2].x, outputCorners[2].y, outputCorners[3].x, outputCorners[3].y);
 
     return transmtx;
   }
@@ -94,12 +97,12 @@ namespace alpr
     Mat deskewed(outputImageSize, this->bigImage.type());
 
     // Apply perspective transformation to the image
-    warpPerspective(this->bigImage, deskewed, transformationMatrix, deskewed.size(), INTER_CUBIC);
-
+    warpPerspective(this->bigImage, deskewed, transformationMatrix, deskewed.size(), INTER_CUBIC /*INTER_LINEAR INTER_NEAREST INTER_AREA      WARP_INVERSE_MAP | INTER_CUBIC*/);
 
 
 
     return deskewed;
+
   }
 
   vector<Point2f> Transformation::remapSmallPointstoCrop(vector<Point> smallPoints, cv::Mat transformationMatrix)

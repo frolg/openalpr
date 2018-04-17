@@ -117,6 +117,13 @@ namespace alpr
 
     // Compute the transformation matrix to go from the current image to the new plate corners
     Transformation imgTransform(this->pipeline_data->grayImg, pipeline_data->crop_gray, expandedRegion);
+    Size cropSize = imgTransform.getCropSize(pipeline_data->plate_corners,
+            Size(pipeline_data->config->ocrImageWidthPx, pipeline_data->config->ocrImageHeightPx));
+    Mat transmtx = imgTransform.getTransformationMatrix(pipeline_data->plate_corners, cropSize);
+    if (this->config->debugPlateCorners)
+              cout << "LicensePlateCandidate cropSize (ocrImage): width=" << cropSize.width << ", height=" << cropSize.height << endl;
+
+/*
 
 //    vector<Point2f> remappedCorners = imgTransform.transformSmallPointsToBigImage(corners);
 //    Size cropSize = imgTransform.getCropSize(pipeline_data->plate_corners,
@@ -139,7 +146,7 @@ namespace alpr
 //    if (this->config->debugPlateCorners)
 //                        cout << "LicensePlateCandidate cropSize: width=" << cropSize.width << ", height=" << cropSize.height << endl;
 
-    Mat transmtx = imgTransform.getTransformationMatrix(pipeline_data->plate_corners, cropSize);
+    Mat transmtx = imgTransform.getTransformationMatrix(pipeline_data->plate_corners, cropSize);*/
     Mat newCropDebug = imgTransform.crop(cropSize, transmtx);
     if (this->config->debugPlateCorners)
 	  displayImage(this->config, "LPC: Image after Transformation", newCropDebug);

@@ -440,17 +440,17 @@ namespace alpr
         //cout << "  -- stage 2 aspect: " << abs(charAspect) << " - " << aspecttolerance << endl;
         if (abs(charAspect - idealAspect1) < aspecttolerance || abs(charAspect - idealAspect2) < aspecttolerance) {
           textContours.goodIndices[i] = true;
-          if (this->config->debugCharAnalysis)
-          	 cout << "CharacterAnalysis#filterByBoxSize: TRUE for i=" << i << ", mr.height=" << mr.height << ", minHeightPx=" << minHeightPx << ", mr.height=" << mr.height
-		  	  << ", maxHeightPx=" << maxHeightPx << ", mr.width=" << mr.width << ", minWidth=" << minWidth << endl;
+//          if (this->config->debugCharAnalysis)
+//          	 cout << "CharacterAnalysis#filterByBoxSize: TRUE for i=" << i << ", mr.height=" << mr.height << ", minHeightPx=" << minHeightPx << ", mr.height=" << mr.height
+//		  	  << ", maxHeightPx=" << maxHeightPx << ", mr.width=" << mr.width << ", minWidth=" << minWidth << endl;
         } else {
-        	if (this->config->debugCharAnalysis)
-			  cout << "CharacterAnalysis#filterByBoxSize: false for i=" << i << endl;
+//        	if (this->config->debugCharAnalysis)
+//			  cout << "CharacterAnalysis#filterByBoxSize: false for i=" << i << endl;
         }
       } else {
-    	  if (this->config->debugCharAnalysis)
-    	  	  cout << "CharacterAnalysis#filterByBoxSize: false for i=" << i << ", mr.height=" << mr.height << " < minHeightPx=" << minHeightPx << " || mr.height=" << mr.height
-			  	  << " > maxHeightPx=" << maxHeightPx << " || mr.width=" << mr.width << " <= minWidth=" << minWidth << endl;
+//    	  if (this->config->debugCharAnalysis)
+//    	  	  cout << "CharacterAnalysis#filterByBoxSize: false for i=" << i << ", mr.height=" << mr.height << " < minHeightPx=" << minHeightPx << " || mr.height=" << mr.height
+//			  	  << " > maxHeightPx=" << maxHeightPx << " || mr.width=" << mr.width << " <= minWidth=" << minWidth << endl;
       }
     }
 

@@ -82,7 +82,7 @@ namespace alpr
       corners.push_back(Point(expandX + w, expandY + h));
       corners.push_back(Point(-1 * expandX, expandY + h));
     }
-    else if (tlc.longerSegment.length > tlc.charHeight * 3)
+    else //if (tlc.longerSegment.length > tlc.charHeight * 3)
     {
     	if (pipeline_data->config->debugGeneral)
     			  std::cout << "EDGEFINDER tlc.longerSegment.length > tlc.charHeight * 3: tlc.longerSegment.length=" << tlc.longerSegment.length << ", tlc.charHeight=" << tlc.charHeight << std::endl;
@@ -280,22 +280,22 @@ namespace alpr
       corners.push_back(botRight);
       corners.push_back(botLeft);
     }
-    else
-    {
-    	if (pipeline_data->config->debugGeneral)
-    				  std::cout << "EDGEFINDER OK: tlc.longerSegment.length <= tlc.charHeight * 3" << std::endl;
-      int expandX = (int) ((float) pipeline_data->crop_gray.cols) * 0.15f;
-      int expandY = (int) ((float) pipeline_data->crop_gray.rows) * 0.15f;
-      int w = pipeline_data->crop_gray.cols;
-      int h = pipeline_data->crop_gray.rows;
-
-      corners.push_back(Point(-1 * expandX, -1 * expandY));
-      corners.push_back(Point(expandX + w, -1 * expandY));
-      corners.push_back(Point(expandX + w, expandY + h));
-      corners.push_back(Point(-1 * expandX, expandY + h));
-
-
-    }
+//    else
+//    {
+//    	if (pipeline_data->config->debugGeneral)
+//    				  std::cout << "EDGEFINDER OK: tlc.longerSegment.length <= tlc.charHeight * 3" << std::endl;
+//      int expandX = (int) ((float) pipeline_data->crop_gray.cols) * 0.15f;
+//      int expandY = (int) ((float) pipeline_data->crop_gray.rows) * 0.15f;
+//      int w = pipeline_data->crop_gray.cols;
+//      int h = pipeline_data->crop_gray.rows;
+//
+//      corners.push_back(Point(-1 * expandX, -1 * expandY));
+//      corners.push_back(Point(expandX + w, -1 * expandY));
+//      corners.push_back(Point(expandX + w, expandY + h));
+//      corners.push_back(Point(-1 * expandX, expandY + h));
+//
+//
+//    }
 
 
     if (pipeline_data->config->debugPlateCorners)
@@ -323,8 +323,8 @@ namespace alpr
     float width = corners[1].x - corners[0].x;
     float height = corners[3].y - corners[0].y;
     Size cropSize = imgTransform.getCropSize(remappedCorners,
-            //Size(pipeline_data->config->templateWidthPx, pipeline_data->config->templateHeightPx));
-    		Size(width, height)//?????????????????
+            Size(pipeline_data->config->templateWidthPx, pipeline_data->config->templateHeightPx)
+    		//Size(width, height)//?????????????????
     		//Size(width*(pipeline_data->config->templateHeightPx/height), pipeline_data->config->templateHeightPx)//?????????????????
     		);
 
@@ -401,10 +401,21 @@ namespace alpr
 			displayImage(pipeline_data->config, "Plate corners (EDGEFINDER) newCrop", newCrop);
 		}
 
+	/*
+	//last
 	//remappedCorners = imgTransform.remapSmallPointstoCrop(remappedCorners, newCrop);
 
 	//vector<Point> smallPlateCorners = normalDetection(newCrop, newLines);
-    return remappedCorners;
+    return remappedCorners;*/
+
+	vector<Point2f> newRemappedCorners = imgTransform.transformSmallPointsToBigImage(corners);
+
+	if (pipeline_data->config->debugPlateCorners) {
+	        cout << "EDGEFINDER newRemappedCorners[0].x=" << newRemappedCorners[0].x << ", newRemappedCorners[1].x=" << newRemappedCorners[1].x
+	        		<< ", newRemappedCorners[0].y=" << newRemappedCorners[0].y << ", newRemappedCorners[3].y = " << newRemappedCorners[3].y << endl;
+	}
+
+	return newRemappedCorners;
 
 
 //
