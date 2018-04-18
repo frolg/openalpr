@@ -458,8 +458,8 @@ namespace alpr
 
   void CharacterAnalysis::filterContourHoles(TextContours& textContours)
   {
-	  if (this->config->debugCharAnalysis)
-	            cout << "filterContourHoles: textContours.size()=" << textContours.size() << endl;
+//	  if (this->config->debugCharAnalysis)
+//	            cout << "filterContourHoles: textContours.size()=" << textContours.size() << endl;
     int goodCnt = 0;
 	for (unsigned int i = 0; i < textContours.size(); i++)
     {
@@ -475,7 +475,7 @@ namespace alpr
         // this contour is a child of an already identified contour.  REMOVE it
         if (this->config->debugCharAnalysis)
         {
-          cout << "filterContourHoles by parent-1: contour index: " << i << endl;
+//          cout << "filterContourHoles by parent-1: contour index: " << i << endl;
         }
       }
       else
@@ -483,8 +483,8 @@ namespace alpr
         //textContours.goodIndices[i] = true;
     	Rect rect = boundingRect(textContours.contours[i]);
 		Point center(rect.x + (rect.width / 2), rect.y + (rect.height / 2));
-		if (this->config->debugCharAnalysis)
-			cout << "filterContourHoles: i=" << i << ", rect=" << rect << endl;
+//		if (this->config->debugCharAnalysis)
+//			cout << "filterContourHoles: i=" << i << ", rect=" << rect << endl;
 
 		bool foundParent = false;
 		for (unsigned int k = 0; k < textContours.size(); k++)
@@ -492,8 +492,8 @@ namespace alpr
 			if (textContours.goodIndices[k] == false)
 			        continue;
 			Rect rectK = boundingRect(textContours.contours[k]);
-			if (this->config->debugCharAnalysis)
-				cout << "filterContourHoles: k=" << k << ", rectK=" << rectK << endl;
+//			if (this->config->debugCharAnalysis)
+//				cout << "filterContourHoles: k=" << k << ", rectK=" << rectK << endl;
 		  // Check if the center of the smaller rectangle is inside the bigger rectangle.
 		  // If so, add it to the children and continue on.
 		  if (rectK.contains(center) && rectK.x < rect.x)
@@ -506,14 +506,14 @@ namespace alpr
 		if (!foundParent) {
 			textContours.goodIndices[i] = true;
 		} else if (this->config->debugCharAnalysis) {
-          cout << "filterContourHoles by parent-2: contour index: " << i << endl;
+//          cout << "filterContourHoles by parent-2: contour index: " << i << endl;
         }
       }
 
 
     }
-	if (this->config->debugCharAnalysis)
-		cout << "filterContourHoles: textContours.size()=" << textContours.size() << ", goodCnt=" << goodCnt << endl;
+//	if (this->config->debugCharAnalysis)
+//		cout << "filterContourHoles: textContours.size()=" << textContours.size() << ", goodCnt=" << goodCnt << endl;
 
   }
 

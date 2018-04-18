@@ -580,17 +580,31 @@ namespace alpr
     float biggestContourWidth = 0;
     vector<vector<Point> > plateContAll;
 
+    if (this->config->debugCharSegmenter) {
+		cout << "CHARACTERSEGMENTER: pipeline_data->regionOfInterest.x=" << pipeline_data->regionOfInterest.x << ", pipeline_data->regionOfInterest.y=" << pipeline_data->regionOfInterest.y << endl;
+		cout << "CHARACTERSEGMENTER: pipeline_data->regionOfInterest.width=" << pipeline_data->regionOfInterest.width << ", pipeline_data->regionOfInterest.height=" << pipeline_data->regionOfInterest.height << endl;
+		cout << "CHARACTERSEGMENTER: pipeline_data->plate_corners: ";
+		for (unsigned int c = 0; c < pipeline_data->plate_corners.size(); c++)
+			cout << "[" << pipeline_data->plate_corners[c].x << ", " << pipeline_data->plate_corners[c].y << "]  ";
+		cout << endl;
+		cout << "CHARACTERSEGMENTER: pipeline_data->plate_corners: width=" << (pipeline_data->plate_corners[1].x - pipeline_data->plate_corners[0].x);
+		cout << ", height=" << (pipeline_data->plate_corners[3].y - pipeline_data->plate_corners[0].y) << endl;
+	}
+
     Mat lineMask;// = Mat::zeros(thresholds[0].size(), CV_8UC1);
-    for (unsigned int i = 0; i < thresholds.size(); i++)
-    {
 
-    	Mat element = getStructuringElement( 1,
-    	  				    Size( 3, 3 ),
-    	  				    Point( 1, 1 ) );
-    	      //dilate(thresholds[i], tempImg, element);
-    	      morphologyEx(thresholds[i], thresholds[i], MORPH_OPEN, element);
-    	      //drawAndWait(&tempImg);
+    if (pipeline_data->plate_corners[1].x - pipeline_data->plate_corners[0].x < pipeline_data->config->templateWidthPx / 2) {
+		for (unsigned int i = 0; i < thresholds.size(); i++)
+		{
 
+			Mat element = getStructuringElement( 1,
+								Size( 3, 3 ),
+								Point( 1, 1 ) );
+				  //dilate(thresholds[i], tempImg, element);
+				  morphologyEx(thresholds[i], thresholds[i], MORPH_OPEN, element);
+				  //drawAndWait(&tempImg);
+
+		}
     }
 
 
