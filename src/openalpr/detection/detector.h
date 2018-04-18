@@ -59,6 +59,7 @@ namespace alpr
       DetectorMask detector_mask;
 
       std::string get_detector_file();
+      std::string get_detector_file_EU();
       
       float computeScaleFactor(int width, int height);
       std::vector<PlateRegion> aggregateRegions(std::vector<cv::Rect> regions);

@@ -593,7 +593,7 @@ namespace alpr
 
     Mat lineMask;// = Mat::zeros(thresholds[0].size(), CV_8UC1);
 
-    if (pipeline_data->plate_corners[1].x - pipeline_data->plate_corners[0].x < pipeline_data->config->templateWidthPx / 2) {
+    /*if (pipeline_data->plate_corners[1].x - pipeline_data->plate_corners[0].x < pipeline_data->config->templateWidthPx / 2) {
 		for (unsigned int i = 0; i < thresholds.size(); i++)
 		{
 
@@ -605,7 +605,48 @@ namespace alpr
 				  //drawAndWait(&tempImg);
 
 		}
-    }
+    }*/
+
+
+    //Mat dbgImage(thresholds[0].size(), CV_8U);
+    Mat hFilterImg = Mat::zeros(thresholds[0].size(), CV_8U);
+	Mat elementH = getStructuringElement(MORPH_RECT,
+					Size((int)(avgCharWidth*2), 1),
+					Point(-1, -1) );
+	morphologyEx(thresholds[0], hFilterImg, MORPH_OPEN, elementH);
+
+	Mat vFilterImg = Mat::zeros(thresholds[0].size(), CV_8U);
+	int height = std::min((int)(avgCharHeight*1.3), (int)thresholds[0].rows);
+	Mat elementV = getStructuringElement(MORPH_RECT,
+					Size(1, height),
+					Point(-1, -1) );
+	morphologyEx(thresholds[0], vFilterImg, MORPH_OPEN, elementV);
+
+	Mat hvFilterImg = Mat::zeros(thresholds[0].size(), CV_8U);
+	bitwise_or(hFilterImg, vFilterImg, hvFilterImg);
+	bitwise_not(hvFilterImg, hvFilterImg);
+
+	//bitwise_and(thresholds[0], hvFilterImg, thresholds[0]);
+
+    if (this->config->debugCharSegmenter)
+	  {
+    	vector<Mat> filterList;
+		//drawAndWait(&dbgImage);
+		//displayImage(config, "Remove small contours: H-lines", hFilterImg);
+		//drawAndWait(&dbgImage);
+		//displayImage(config, "Remove small contours: V-lines", vFilterImg);
+		//displayImage(config, "Remove small contours: HV-lines", hvFilterImg);
+
+		filterList.push_back(hFilterImg);
+		filterList.push_back(vFilterImg);
+		filterList.push_back(hvFilterImg);
+
+		Mat dbgImg = Mat::zeros(thresholds[0].size(), CV_8U);
+		bitwise_and(thresholds[0], hvFilterImg, dbgImg);
+
+		filterList.push_back(dbgImg);
+		displayImage(config, "Remove small contours: HV-filters", drawImageDashboard(filterList, thresholds[0].type(), 4));
+	  }
 
 
       vector<vector<Point> > contours;
@@ -809,8 +850,10 @@ namespace alpr
     	vector<vector<Point> > contours;
 		vector<Vec4i> hierarchy;
 
-		line(thresholds[i], leftTop, rightTop, cv::Scalar(0,0,0));
-		line(thresholds[i], leftBottom, rightBottom, cv::Scalar(0,0,0));
+		//line(thresholds[i], leftTop, rightTop, cv::Scalar(0,0,0));
+		//line(thresholds[i], leftBottom, rightBottom, cv::Scalar(0,0,0));
+
+		bitwise_and(thresholds[i], hvFilterImg, thresholds[i]);
 
 		Mat tempThreshold(thresholds[i].size(), CV_8U);
 		thresholds[i].copyTo(tempThreshold);

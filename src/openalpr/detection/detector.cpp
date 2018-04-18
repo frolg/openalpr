@@ -215,6 +215,11 @@ namespace alpr
   }
 
 
+  std::string Detector::get_detector_file_EU() {
+      return config->getCascadeRuntimeDir() + "haarcascade_russian_plate_number_opencv_1.xml";
+    }
+
+
   float Detector::computeScaleFactor(int width, int height) {
     
     float scale_factor = 1.0;
