@@ -41,6 +41,7 @@ namespace alpr
       this->loaded = false;
       printf("--(!)Error loading CPU classifier %s\n", get_detector_file().c_str());
     }
+    this->plate_cascade_RU.load( get_detector_file_EU());
   }
 
 
@@ -103,29 +104,20 @@ namespace alpr
       cout << "LBP Time: " << diffclock(startTime, endTime) << "ms., plates.size()=" << plates.size() << endl;
     }
 
-    if (plates.size() == 0) {
-    	if( this->plate_cascade.load( get_detector_file_EU() ) )
-		{
-		  this->loaded = true;
-		  cout << "LBP (EU) start" << endl;
-		  plate_cascade.detectMultiScale( frame, plates, config->detection_iteration_increase, config->detectionStrictness,
-		                                        CV_HAAR_DO_CANNY_PRUNING,
-		                                        //0|CV_HAAR_SCALE_IMAGE,
-		                                        min_plate_size, max_plate_size );
+//    if (plates.size() == 0) {
+//		  if (config->debugGeneral)
+//			  cout << "LBP (EU) start" << endl;
+//		  plate_cascade_RU.detectMultiScale( frame, plates, config->detection_iteration_increase, config->detectionStrictness,
+//		                                        CV_HAAR_DO_CANNY_PRUNING,
+//		                                        //0|CV_HAAR_SCALE_IMAGE,
+//		                                        min_plate_size, max_plate_size );
+//		if (config->debugGeneral)
+//		{
+//		  cout << "LBP (EU), plates.size()=" << plates.size() << endl;
+//		}
+//
+//    }
 
-
-		}
-		else
-		{
-		  this->loaded = false;
-		  printf("--(!)Error loading CPU classifier %s\n", get_detector_file().c_str());
-		}
-    }
-
-    if (config->debugGeneral)
-	{
-	  cout << "LBP (EU), plates.size()=" << plates.size() << endl;
-	}
 
     return plates;
 

@@ -414,7 +414,7 @@ namespace alpr
 	        cout << "EDGEFINDER newRemappedCorners[0].x=" << newRemappedCorners[0].x << ", newRemappedCorners[1].x=" << newRemappedCorners[1].x
 	        		<< ", newRemappedCorners[0].y=" << newRemappedCorners[0].y << ", newRemappedCorners[3].y = " << newRemappedCorners[3].y << endl;
 	}
-
+	 normalDetection(newCrop, newLines);
 	return newRemappedCorners;
 
 

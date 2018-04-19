@@ -42,6 +42,7 @@ namespace alpr
   private:
 
       cv::CascadeClassifier plate_cascade;
+      cv::CascadeClassifier plate_cascade_RU;
 
   };
 

@@ -42,15 +42,23 @@ namespace alpr
 
     if (pipeline_data->plate_inverted)
       bitwise_not(pipeline_data->crop_gray, pipeline_data->crop_gray);
+
     pipeline_data->clearThresholds();
     pipeline_data->thresholds = produceThresholds(pipeline_data->crop_gray, config);
 
     // TODO: Perhaps a bilateral filter would be better here.
     medianBlur(pipeline_data->crop_gray, pipeline_data->crop_gray, 3);
+    //bilateralFilter(pipeline_data->crop_gray, pipeline_data->crop_gray, 3, 45, 45);
 
-    if (this->config->debugCharSegmenter)
+
+    /*bilateralFilter(inputImage, smoothed, 3, 45, 45);
+    Mat edges(inputImage.size(), inputImage.type());
+    Canny(smoothed, edges, 66, 133);*/
+
+    if (this->config->debugCharSegmenter) {
       cout << "Segmenter: inverted: " << pipeline_data->plate_inverted << endl;
-
+      displayImage(config, "CharacterSegmenter  Thresholds (Init)", drawImageDashboard(pipeline_data->thresholds, CV_8U, 3));
+    }
 
   }
   
@@ -613,14 +621,19 @@ namespace alpr
 	Mat elementH = getStructuringElement(MORPH_RECT,
 					Size((int)(avgCharWidth*2), 1),
 					Point(-1, -1) );
-	morphologyEx(thresholds[0], hFilterImg, MORPH_OPEN, elementH);
+	//morphologyEx(thresholds[0], hFilterImg, MORPH_OPEN, elementH);
+
+    erode(thresholds[0], hFilterImg, elementH, Point(-1, -1));
+    dilate(hFilterImg, hFilterImg, elementH, Point(-1, -1));
 
 	Mat vFilterImg = Mat::zeros(thresholds[0].size(), CV_8U);
 	int height = std::min((int)(avgCharHeight*1.3), (int)thresholds[0].rows);
 	Mat elementV = getStructuringElement(MORPH_RECT,
 					Size(1, height),
 					Point(-1, -1) );
-	morphologyEx(thresholds[0], vFilterImg, MORPH_OPEN, elementV);
+	//morphologyEx(thresholds[0], vFilterImg, MORPH_OPEN, elementV);
+    erode(thresholds[0], vFilterImg, elementV, Point(-1, -1));
+    dilate(vFilterImg, vFilterImg, elementV, Point(-1, -1));
 
 	Mat hvFilterImg = Mat::zeros(thresholds[0].size(), CV_8U);
 	bitwise_or(hFilterImg, vFilterImg, hvFilterImg);
@@ -647,6 +660,8 @@ namespace alpr
 		filterList.push_back(dbgImg);
 		displayImage(config, "Remove small contours: HV-filters", drawImageDashboard(filterList, thresholds[0].type(), 4));
 	  }
+
+
 
 
       vector<vector<Point> > contours;
@@ -711,6 +726,237 @@ namespace alpr
 			  biggestContourIdx = c;
 		  }
       }
+
+      if (this->config->debugCharSegmenter)
+	  {
+		Mat dbgImage(thresholds[0].size(), CV_8U);
+		thresholds[0].copyTo(dbgImage);
+		cvtColor(dbgImage, dbgImage, CV_GRAY2RGB);
+		//line(dbgImage, left, right, cv::Scalar(0,255,0));
+		//drawContours(dbgImage, contours, biggestContourIdx, Scalar(255,105,180), 3);
+
+		//line(dbgImage, leftTop, rightTop, cv::Scalar(0,255,0));
+		//line(dbgImage, leftBottom, rightBottom, cv::Scalar(0,255,0));
+
+		line(dbgImage, textLine.bottomLine.p1, textLine.bottomLine.p2, cv::Scalar(0,255,0), 2);
+		line(dbgImage, textLine.topLine.p1, textLine.topLine.p2, cv::Scalar(0,255,0), 2);
+
+		//drawContours(dbgImage, contours, biggestContourIdx, Scalar(255,105,180), -1, 8, hierarchy, 1);
+		if (biggestContourIdx > -1) {
+			drawContours(dbgImage, contours, biggestContourIdx, Scalar(255,105,180), 1);
+		}
+		displayImage(config, "Remove small contours (111)", dbgImage);
+	  }
+
+
+
+      ////////////////////////////////
+   /*   Mat templImage(thresholds[0].size(), CV_8U);
+  	thresholds[0].copyTo(templImage);
+
+      Mat smoothed(templImage.size(), templImage.type());
+  	bilateralFilter(templImage, smoothed, 3, 45, 45);
+
+  	Mat edges(templImage.size(), templImage.type());
+
+  	//Canny(src, dst, 50, 200, 3);
+  	Canny(smoothed, edges, 66, 133);
+
+  	// Create a mask that is dilated based on the detected characters
+
+
+  //	Mat mask = Mat::zeros(templImage.size(), CV_8U);
+  //
+  //	for (unsigned int i = 0; i < textLines.size(); i++)
+  //	{
+  //	  vector<vector<Point> > polygons;
+  //	  polygons.push_back(textLines[i].textArea);
+  //	  fillPoly(mask, polygons, Scalar(255,255,255));
+  //	}
+  //	dilate(mask, mask, getStructuringElement( 1, Size( 1 + 1, 2*1+1 ), Point( 1, 1 ) ));
+  //	bitwise_not(mask, mask);
+  //
+  //	// AND canny edges with the character mask
+  //	bitwise_and(edges, mask, edges);
+
+
+  	int sensitivity = 50;
+  	vector<Vec2f> allLines;
+      HoughLines( edges, allLines, 1, CV_PI/180, sensitivity, 0, 0 );
+      vector<LineSegment> verticalLines;
+            vector<LineSegment> horizontalLines;
+          for( size_t i = 0; i < allLines.size(); i++ )
+          {
+          	float rho = allLines[i][0], theta = allLines[i][1];
+          	      Point pt1, pt2;
+          	      double a = cos(theta), b = sin(theta);
+          	      double x0 = a*rho, y0 = b*rho;
+
+          	      double angle = theta * (180 / CV_PI);
+          	      pt1.x = cvRound(x0 + 1000*(-b));
+          	      pt1.y = cvRound(y0 + 1000*(a));
+          	      pt2.x = cvRound(x0 - 1000*(-b));
+          	      pt2.y = cvRound(y0 - 1000*(a));
+          	      double length = cv::norm(pt2 - pt1);
+
+          	        if (length > height && (angle < 20 || angle > 340 || (angle > 160 && angle < 210)))
+          	        {
+          	          // good vertical
+
+          	          LineSegment line;
+          	          if (pt1.y <= pt2.y)
+          	            line = LineSegment(pt2.x, pt2.y, pt1.x, pt1.y);
+          	          else
+          	            line = LineSegment(pt1.x, pt1.y, pt2.x, pt2.y);
+
+          	          // Get rid of the -1000, 1000 stuff.  Terminate at the edges of the image
+          	          // Helps with debugging/rounding issues later
+  //        	          LineSegment top(0, 0, edges.cols, 0);
+  //        	          LineSegment bottom(0, edges.rows, edges.cols, edges.rows);
+  //        	          Point p1 = line.intersection(bottom);
+  //        	          Point p2 = line.intersection(top);
+  //
+  //        	          filteredLines.push_back(plateLine);
+          	          verticalLines.push_back(line);
+
+          	        } else if (length > avgCharWidth*2 && ((angle > 70 && angle < 110) || (angle > 250 && angle < 290)))
+          	        {
+          	          // good horizontal
+
+          	          LineSegment line;
+          	          if (pt1.x <= pt2.x)
+          	            line = LineSegment(pt1.x, pt1.y, pt2.x, pt2.y);
+          	          else
+          	            line =LineSegment(pt2.x, pt2.y, pt1.x, pt1.y);
+
+          	          // Get rid of the -1000, 1000 stuff.  Terminate at the edges of the image
+          	          // Helps with debugging/ rounding issues later
+  //        	          int newY1 = line.getPointAt(0);
+  //        	          int newY2 = line.getPointAt(edges.cols);
+  //
+  //        	          filteredLines.push_back(plateLine);
+          	          horizontalLines.push_back(line);
+          	        }
+          }
+
+          if (this->config->debugCharSegmenter) {
+
+          	Mat dbgImage(edges.size(), CV_8U);
+          	edges.copyTo(dbgImage);
+  			cvtColor(dbgImage, dbgImage, CV_GRAY2RGB);
+  			for (int i = 0; i < verticalLines.size(); i++ )
+  			  {
+  				//line( dbgImage, verticalLines[i].p1, verticalLines[i].p2, Scalar(0,0,255), 1, CV_AA);
+  			  }
+  			for (int i = 0; i < horizontalLines.size(); i++ )
+  			  {
+  				//line( dbgImage, horizontalLines[i].p1, horizontalLines[i].p2, Scalar(0,255,255), 1, CV_AA);
+  			  }
+
+  			  displayImage(this->config, "CharactrSegmenter Hough Lines", dbgImage);
+          }
+
+
+
+*/
+
+
+        /*vector<Vec4i> lines;
+        //HoughLinesP(edges, lines, 1, CV_PI/180, 50, avgCharWidth*2, 10);
+        HoughLinesP(edges, lines, 1, CV_PI/180, 50, min((int)(height/2), (int)(avgCharWidth*2)), 10);
+
+//            rho=6,
+//            theta=np.pi / 60,
+//            threshold=160,
+//            lines=np.array([]),
+//            minLineLength=40,
+//            maxLineGap=25
+        vector<LineSegment> verticalLines;
+        vector<LineSegment> horizontalLines;
+		for( size_t i = 0; i < lines.size(); i++ )
+		{
+		  Vec4i l = lines[i];
+		  Point pt1, pt2;
+
+		  pt1.x = l[0];
+		  pt1.y = l[1];
+		  pt2.x = l[2];
+		  pt2.y = l[3];
+		  double angle = atan2(pt2.y - pt1.y, pt2.x - pt1.x) * 180.0 / CV_PI;
+
+		  if (this->config->debugCharSegmenter)
+		  			  cout << "CHARACTERSEGMENTER line[" << i << "]: " << pt1 << ", " << pt2 << ", angle: " << angle << endl;
+
+		  double length = cv::norm(pt2 - pt1);
+
+			//if (length > height && (angle < 20 || angle > 340 || (angle > 160 && angle < 210)))
+		  if (length > height && (angle < -80 && angle > -100 || (angle > 80 && angle < 90)))
+			{
+			  // good vertical
+
+			  LineSegment line;
+			  if (pt1.y <= pt2.y)
+				line = LineSegment(pt2.x, pt2.y, pt1.x, pt1.y);
+			  else
+				line = LineSegment(pt1.x, pt1.y, pt2.x, pt2.y);
+
+			  // Get rid of the -1000, 1000 stuff.  Terminate at the edges of the image
+			  // Helps with debugging/rounding issues later
+//        	          LineSegment top(0, 0, edges.cols, 0);
+//        	          LineSegment bottom(0, edges.rows, edges.cols, edges.rows);
+//        	          Point p1 = line.intersection(bottom);
+//        	          Point p2 = line.intersection(top);
+//
+//        	          filteredLines.push_back(plateLine);
+			  verticalLines.push_back(line);
+
+			//} else if (length > avgCharWidth*2 && ((angle > 70 && angle < 110) || (angle > 250 && angle < 290)))
+			} else if (length > avgCharWidth*2 && ((angle > -10 && angle < 10) || (angle > 170 && angle < 190)))
+			{
+			  // good horizontal
+
+			  LineSegment line;
+			  if (pt1.x <= pt2.x)
+				line = LineSegment(pt1.x, pt1.y, pt2.x, pt2.y);
+			  else
+				line =LineSegment(pt2.x, pt2.y, pt1.x, pt1.y);
+
+			  // Get rid of the -1000, 1000 stuff.  Terminate at the edges of the image
+			  // Helps with debugging/ rounding issues later
+//        	          int newY1 = line.getPointAt(0);
+//        	          int newY2 = line.getPointAt(edges.cols);
+//
+//        	          filteredLines.push_back(plateLine);
+			  horizontalLines.push_back(line);
+			}
+		}
+
+		if (this->config->debugCharSegmenter) {
+
+			Mat dbgImage(edges.size(), CV_8U);
+			edges.copyTo(dbgImage);
+			cvtColor(dbgImage, dbgImage, CV_GRAY2RGB);
+			for (int i = 0; i < verticalLines.size(); i++ )
+			  {
+				line( dbgImage, verticalLines[i].p1, verticalLines[i].p2, Scalar(0,0,255), 1, CV_AA);
+			  }
+			for (int i = 0; i < horizontalLines.size(); i++ )
+			  {
+				line( dbgImage, horizontalLines[i].p1, horizontalLines[i].p2, Scalar(0,255,255), 1, CV_AA);
+			  }
+
+			  displayImage(this->config, "CharactrSegmenter Hough Lines", dbgImage);
+		}*/
+  ////////////////////////////////////////
+
+
+
+
+
+
+
+
+
 
       Point leftTop = Point(textLine.topLine.p1.x, textLine.topLine.p1.y);
       Point rightTop = Point(textLine.topLine.p2.x, textLine.topLine.p2.y);
