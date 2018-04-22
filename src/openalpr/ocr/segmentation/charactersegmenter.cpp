@@ -58,7 +58,7 @@ namespace alpr
 	  for (unsigned int lineidx = 0; lineidx < pipeline_data->textLines.size(); lineidx++)
 	      {
 	        //orig
-	        float avgCharHeight = pipeline_data->textLines[lineidx].lineHeight;
+	        /*float avgCharHeight = pipeline_data->textLines[lineidx].lineHeight;
 	        float height_to_width_ratio = pipeline_data->config->charHeightMM[lineidx] / pipeline_data->config->charWidthMM[lineidx];
 	        float avgCharWidth = avgCharHeight / height_to_width_ratio;
 	        int sumWidth = 0;
@@ -72,9 +72,10 @@ namespace alpr
 	              Rect mr= boundingRect(pipeline_data->textLines[lineidx].textContours.contours[i]);
 	              sumWidth += mr.width;
 	              sumHeight += mr.height;
-	            }
-	  //      float avgCharWidth = 1.2 * (sumWidth / cntGood);
-	  //      float avgCharHeight = min((float)1.05*sumHeight / cntGood, pipeline_data->textLines[lineidx].lineHeight);
+	            }*/
+	            //todo test2
+	        float avgCharWidth = 1.2 * (sumWidth / cntGood);
+	        float avgCharHeight = min((float)*sumHeight / cntGood, pipeline_data->textLines[lineidx].lineHeight);
 
 	        if (config->debugCharSegmenter)
 	        {
@@ -593,60 +594,23 @@ namespace alpr
 
     Mat lineMask;// = Mat::zeros(thresholds[0].size(), CV_8UC1);
 
-    /*if (pipeline_data->plate_corners[1].x - pipeline_data->plate_corners[0].x < pipeline_data->config->templateWidthPx / 2) {
+    if (pipeline_data->plate_corners[1].x - pipeline_data->plate_corners[0].x < pipeline_data->config->templateWidthPx / 2) {
 		for (unsigned int i = 0; i < thresholds.size(); i++)
 		{
-
+			//todo test1
 			Mat element = getStructuringElement( 1,
 								Size( 3, 3 ),
 								Point( 1, 1 ) );
 				  //dilate(thresholds[i], tempImg, element);
-				  morphologyEx(thresholds[i], thresholds[i], MORPH_OPEN, element);
+				  erode(thresholds[i], thresholds[i], element);
+				  //morphologyEx(thresholds[i], thresholds[i], MORPH_OPEN, element);
 				  //drawAndWait(&tempImg);
 
 		}
-    }*/
+    }
 
 
-    //Mat dbgImage(thresholds[0].size(), CV_8U);
-    Mat hFilterImg = Mat::zeros(thresholds[0].size(), CV_8U);
-	Mat elementH = getStructuringElement(MORPH_RECT,
-					Size((int)(avgCharWidth*2), 1),
-					Point(-1, -1) );
-	morphologyEx(thresholds[0], hFilterImg, MORPH_OPEN, elementH);
 
-	Mat vFilterImg = Mat::zeros(thresholds[0].size(), CV_8U);
-	int height = std::min((int)(avgCharHeight*1.3), (int)thresholds[0].rows);
-	Mat elementV = getStructuringElement(MORPH_RECT,
-					Size(1, height),
-					Point(-1, -1) );
-	morphologyEx(thresholds[0], vFilterImg, MORPH_OPEN, elementV);
-
-	Mat hvFilterImg = Mat::zeros(thresholds[0].size(), CV_8U);
-	bitwise_or(hFilterImg, vFilterImg, hvFilterImg);
-	bitwise_not(hvFilterImg, hvFilterImg);
-
-	//bitwise_and(thresholds[0], hvFilterImg, thresholds[0]);
-
-    if (this->config->debugCharSegmenter)
-	  {
-    	vector<Mat> filterList;
-		//drawAndWait(&dbgImage);
-		//displayImage(config, "Remove small contours: H-lines", hFilterImg);
-		//drawAndWait(&dbgImage);
-		//displayImage(config, "Remove small contours: V-lines", vFilterImg);
-		//displayImage(config, "Remove small contours: HV-lines", hvFilterImg);
-
-		filterList.push_back(hFilterImg);
-		filterList.push_back(vFilterImg);
-		filterList.push_back(hvFilterImg);
-
-		Mat dbgImg = Mat::zeros(thresholds[0].size(), CV_8U);
-		bitwise_and(thresholds[0], hvFilterImg, dbgImg);
-
-		filterList.push_back(dbgImg);
-		displayImage(config, "Remove small contours: HV-filters", drawImageDashboard(filterList, thresholds[0].type(), 4));
-	  }
 
 
       vector<vector<Point> > contours;
@@ -711,6 +675,56 @@ namespace alpr
 			  biggestContourIdx = c;
 		  }
       }
+
+
+
+      //Mat dbgImage(thresholds[0].size(), CV_8U);
+          Mat hFilterImg = Mat::zeros(thresholds[0].size(), CV_8U);
+      	Mat elementH = getStructuringElement(MORPH_RECT,
+      					Size((int)(avgCharWidth*2), 1),
+      					Point(-1, -1) );
+      	morphologyEx(thresholds[0], hFilterImg, MORPH_OPEN, elementH);
+
+      	Mat vFilterImg = Mat::zeros(thresholds[0].size(), CV_8U);
+      	int height = std::min((int)(avgCharHeight*1.3), (int)thresholds[0].rows);
+      	Mat elementV = getStructuringElement(MORPH_RECT,
+      					Size(1, height),
+      					Point(-1, -1) );
+      	morphologyEx(thresholds[0], vFilterImg, MORPH_OPEN, elementV);
+
+      	Mat hvFilterImg = Mat::zeros(thresholds[0].size(), CV_8U);
+      	bitwise_or(hFilterImg, vFilterImg, hvFilterImg);
+      	bitwise_not(hvFilterImg, hvFilterImg);
+
+      	//bitwise_and(thresholds[0], hvFilterImg, thresholds[0]);
+
+          if (this->config->debugCharSegmenter)
+      	  {
+          	vector<Mat> filterList;
+      		//drawAndWait(&dbgImage);
+      		//displayImage(config, "Remove small contours: H-lines", hFilterImg);
+      		//drawAndWait(&dbgImage);
+      		//displayImage(config, "Remove small contours: V-lines", vFilterImg);
+      		//displayImage(config, "Remove small contours: HV-lines", hvFilterImg);
+
+      		filterList.push_back(hFilterImg);
+      		filterList.push_back(vFilterImg);
+      		filterList.push_back(hvFilterImg);
+
+      		Mat dbgImg = Mat::zeros(thresholds[0].size(), CV_8U);
+      		bitwise_and(thresholds[0], hvFilterImg, dbgImg);
+
+      		filterList.push_back(dbgImg);
+      		displayImage(config, "Remove small contours: HV-filters", drawImageDashboard(filterList, thresholds[0].type(), 4));
+      	  }
+
+
+
+      Mat blackArea = Mat::zeros(thresholds[0].size(), CV_8U);
+      Mat elementBA = getStructuringElement(MORPH_RECT,
+      					Size(((int)avgCharWidth*2) + 1, (int)(avgCharHeight*0,8)),
+      					Point(-1, -1) );
+      morphologyEx(thresholds[0], hFilterImg, MORPH_OPEN, elementH);
 
       Point leftTop = Point(textLine.topLine.p1.x, textLine.topLine.p1.y);
       Point rightTop = Point(textLine.topLine.p2.x, textLine.topLine.p2.y);
