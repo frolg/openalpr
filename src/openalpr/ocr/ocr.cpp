@@ -43,7 +43,7 @@ namespace alpr
 
     CharacterSegmenter segmenter(pipeline_data);
     for (unsigned int lineidx = 0; lineidx < pipeline_data->textLines.size(); lineidx++) {
-    	segmenter.removeSmallContoursPreprocess(pipeline_data->thresholds, pipeline_data->textLines[lineidx]);
+    	segmenter.removeSmallContoursPreprocess(pipeline_data->textLines[lineidx]);
     }
 
     for (unsigned int i = 0; i < pipeline_data->thresholds.size(); i++)
@@ -84,6 +84,7 @@ namespace alpr
 	  }
       float avgGoodContourWidth = (float)sumWidth / cntGood;
       float avgGoodContourHeight = (float)sumHeight / cntGood;
+      const float MIN_CHAR_WIDTH = 0.25 * avgGoodContourWidth;
       std::vector<cv::Mat> imgDbgThresholds;
       //std::vector<std::vector<cv::Rect> > thresholdsInnerSymbRects;
       std::vector<std::vector<OcrChar> > thresholdsOcrChars;
@@ -169,12 +170,12 @@ namespace alpr
 				int width2 = newX2 - newX1;
 				int width3 = charRegion.x + charRegion.width - newX2;
 
-				if (width1 < 4) {
+				if (width1 < MIN_CHAR_WIDTH) {
 					width1 = 0;
 					width2 = newX2 - charRegion.x;
 				}
 
-				if (width2 < 4) {
+				if (width2 < MIN_CHAR_WIDTH) {
 					if (width1 != 0) {
 						width1 = newX2 - charRegion.x;
 						width2 = 0;
@@ -183,7 +184,7 @@ namespace alpr
 					}
 				}
 
-				if (width3 < 4) {
+				if (width3 < MIN_CHAR_WIDTH) {
 					if (width2 != 0) {
 						width2 += width3;
 					} else {

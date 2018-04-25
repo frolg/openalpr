@@ -40,7 +40,8 @@ namespace alpr
   enum ResultMergeStrategy
   {
     MERGE_COMBINE,  // Used when running an analysis multiple times for accuracy improvement.  Merges results together
-    MERGE_PICK_BEST // Used when analyzing multiple countries.  Chooses results from one country or the other
+    MERGE_PICK_BEST, // Used when analyzing multiple countries.  Chooses results from one country or the other
+	MERGE_ON_MATCH_TEMPLATE
   };
   
   struct ResultPlateScore

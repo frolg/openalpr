@@ -50,7 +50,7 @@ namespace alpr
       virtual ~CharacterSegmenter();
 
       void segment();
-      void removeSmallContoursPreprocess(std::vector<cv::Mat> thresholds, TextLine textLine);
+      void removeSmallContoursPreprocess(TextLine textLine);
       
       int confidence;
 
@@ -68,7 +68,9 @@ namespace alpr
 
       cv::Mat getCharBoxMask(cv::Mat img_threshold, std::vector<cv::Rect> charBoxes);
 
-      void removeSmallContours(std::vector<cv::Mat> thresholds, float avgCharHeight,  float avgCharWidth, TextLine textLine);
+      void removeSmallContours(float avgCharHeight,  float avgCharWidth, TextLine textLine);
+      void removeSmallContours1(float avgCharHeight,  float avgCharWidth, TextLine textLine);
+      void removeSmallContours2(float avgCharHeight,  float avgCharWidth, TextLine textLine);
 
       std::vector<cv::Rect> getHistogramBoxes(HistogramVertical histogram, float avgCharWidth, float avgCharHeight, float* score);
       std::vector<cv::Rect> getBestCharBoxes(cv::Mat img, std::vector<cv::Rect> charBoxes, float avgCharWidth);

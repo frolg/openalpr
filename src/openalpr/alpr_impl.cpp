@@ -127,6 +127,7 @@ namespace alpr
     // and aggregate the results if necessary
     //ResultAggregator country_aggregator(MERGE_PICK_BEST, topN, config);
     ResultAggregator country_aggregator(MERGE_COMBINE, topN, config);
+    //ResultAggregator country_aggregator(MERGE_ON_MATCH_TEMPLATE, topN, config);
     for (unsigned int i = 0; i < config->loaded_countries.size(); i++)
     {
       if (config->debugGeneral)

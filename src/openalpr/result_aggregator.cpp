@@ -84,6 +84,13 @@ namespace alpr
     return firstElem.first > secondElem.first;
   }
   
+  bool plateCompareByConfidence(const AlprPlate &first, const AlprPlate &second)
+	{
+	  if (first.overall_confidence < second.overall_confidence)
+		return false;
+	  return true;
+	}
+
   AlprFullDetails ResultAggregator::getAggregateResults()
   {
     assert(all_results.size() > 0);
@@ -132,8 +139,47 @@ namespace alpr
 
         response.results.plates.push_back(clusters[i][best_index]);
       }
-    }
-    else if (merge_strategy == MERGE_COMBINE)
+    } else if (merge_strategy == MERGE_ON_MATCH_TEMPLATE) {
+
+//    	if (letters[i].size() > 0)
+//    	        std::stable_sort(letters[i].begin(), letters[i].end(), letterCompare);
+//
+//    	 std::sort(tempTextLines.begin(), tempTextLines.end(), sort_text_line);
+//
+//
+//    	 std::sort(contours.begin(), contours.end(),
+//				[](const vector<Point>& contour1, const vector<Point>& contour2){
+//					Rect ra(boundingRect(contour1));
+//					  Rect rb(boundingRect(contour2));
+//					  return (ra.x < rb.x);
+//				});
+
+    	vector<AlprPlate> matchesTemplatePlates;
+    	vector<AlprPlate> notMatchesTemplatePlates;
+    	for (unsigned int i = 0; i < clusters.size(); i++)//for each country
+		  {
+			for (unsigned int k = 0; k < clusters[i].size(); k++)//for each detected plate
+			{
+				for (unsigned int m = 0; m < clusters[i][k].topNPlates.size(); m++) {
+					if (clusters[i][k].topNPlates[m].matches_template) {
+						matchesTemplatePlates.push_back(clusters[i][k].topNPlates[m]);
+					} else {
+						notMatchesTemplatePlates.push_back(clusters[i][k].topNPlates[m]);
+					}
+				}
+			}
+		  }
+    	std::sort(matchesTemplatePlates.begin(), matchesTemplatePlates.end(), plateCompareByConfidence);
+    	std::sort(notMatchesTemplatePlates.begin(), notMatchesTemplatePlates.end(), plateCompareByConfidence);
+
+//    	for (unsigned int i = 0; i < matchesTemplatePlates.size(); i++) {
+//    		response.results.plates.push_back(matchesTemplatePlates[i]);
+//    	}
+//    	for (unsigned int i = 0; i < notMatchesTemplatePlates.size(); i++) {
+//			response.results.plates.push_back(notMatchesTemplatePlates[i]);
+//		}
+
+    } else if (merge_strategy == MERGE_COMBINE)
     {
       // Each cluster is the same plate, just analyzed from a slightly different 
       // perspective.  Merge them together and score them as if they are one

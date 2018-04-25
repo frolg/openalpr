@@ -20,6 +20,7 @@
 #include <cstdio>
 #include <sstream>
 #include <iostream>
+#include <fstream>
 #include <iterator>
 #include <algorithm>
 #include <sys/time.h>
@@ -44,6 +45,7 @@ const std::string LAST_VIDEO_STILL_LOCATION = "/tmp/laststill.jpg";
 const std::string WEBCAM_PREFIX = "/dev/video";
 //const std::string DEFDIR = "/var/lib/openalpr/plateimages/";
 const std::string DEFDIR = "/home/srv/work/plateimages/";
+const std::string LOGDIR = "/home/srv/work/logs/";
 MotionDetector motiondetector;
 bool do_motiondetection = true;
 
@@ -66,6 +68,9 @@ static int totalCount = 0;
 static int detectedCount = 0;
 static int additionalDetectedCount = 0;
 
+std::ofstream logDetected;
+std::ofstream logNotDetected;
+
 int main( int argc, const char** argv )
 {
 	timespec startTime;
@@ -80,6 +85,16 @@ int main( int argc, const char** argv )
   int topn;
   bool debug_mode = false;
   bool save = false;
+
+  struct tm *tm;
+  char buf[200];
+//  /* convert time_t to broken-down time representation */
+//  tm = localtime(&t);
+//  /* format time days.month.year hour:minute:seconds */
+//  strftime(buf, sizeof(buf), "%d.%m.%Y %H:%M:%S", ts.tv_nsec);
+//
+//  printf("%lld.%.9ld", (long long)ts.tv_sec, ts.tv_nsec)
+//  printf("Date: %s %ldns\n", p, ts.tv_nsec);
 
   TCLAP::CmdLine cmd("OpenAlpr Command Line Utility", ' ', Alpr::getVersion());
 
@@ -136,6 +151,15 @@ int main( int argc, const char** argv )
     return 1;
   }
 
+    //time_t nowtime = startTime.tv_sec;
+    //tm = localtime(&nowtime);
+    time_t nowtime;
+    time(&nowtime);
+	tm = localtime(&nowtime);
+	strftime(buf, sizeof(buf), "%Y.%m.%d_%H:%M:%S", tm);
+
+	logDetected.open(LOGDIR + buf + "_detected.log");
+	logNotDetected.open(LOGDIR + buf + "_not_detected.log");
   
   cv::Mat frame;
 
@@ -358,6 +382,9 @@ int main( int argc, const char** argv )
   getTimeMonotonic(&endTime);
   std::cout << "OpenALPR Total Time: " << diffclock(startTime, endTime) << "ms." << std::endl;
 
+  logDetected.close();
+  logNotDetected.close();
+
   return 0;
 }
 
@@ -510,7 +537,9 @@ bool detectandshow(Alpr* alpr, cv::Mat frame, std::string region, bool writeJson
     }
     if (detected) {
     	detectedCount++;
+    	logDetected << fileName << std::endl;
     } else {
+    	logNotDetected << fileName << std::endl;
     	std::cout << "NOT DETECTED" << std::endl;
     	std::cout << "fileName.size()=" << fileName.size() << std::endl;
     	if (fileName.size() != 0) {
@@ -534,8 +563,6 @@ bool detectandshow(Alpr* alpr, cv::Mat frame, std::string region, bool writeJson
     	}
     }
   }
-
-
 
   return results.plates.size() > 0;
 }
