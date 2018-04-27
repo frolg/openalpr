@@ -98,8 +98,8 @@ namespace alpr
 	        if (this->config->debugCharSegmenter)
 	  		{
 	  		  Mat imgDash = drawImageDashboard(pipeline_data->thresholds, CV_8U, 3);
-	  		  line(imgDash, top.p1, top.p2, Scalar(255, 0, 0), 1, CV_AA);
-	  		  line(imgDash, bottom.p1, bottom.p2, Scalar(0, 0, 255), 1, CV_AA);
+	  		  line(imgDash, top.p1, top.p2, Scalar(100, 100, 100), 2, CV_AA);
+	  		  line(imgDash, bottom.p1, bottom.p2, Scalar(100, 100, 100), 1, CV_AA);
 	  		  displayImage(config, "Segmentation after removeSmallContours", imgDash);
 	  		}
 	      }
@@ -127,7 +127,9 @@ namespace alpr
       float avgCharHeight = pipeline_data->textLines[lineidx].lineHeight;
       float height_to_width_ratio = pipeline_data->config->charHeightMM[lineidx] / pipeline_data->config->charWidthMM[lineidx];
       float avgCharWidth = avgCharHeight / height_to_width_ratio;
-      int sumWidth = 0;
+
+
+      /*int sumWidth = 0;
       int sumHeight = 0;
       int cntGood = 0;
       for (unsigned int i = 0; i < pipeline_data->textLines[lineidx].textContours.size(); i++)
@@ -139,8 +141,9 @@ namespace alpr
             sumWidth += mr.width;
             sumHeight += mr.height;
           }
-//      float avgCharWidth = 1.2 * (sumWidth / cntGood);
-//      float avgCharHeight = min((float)1.05*sumHeight / cntGood, pipeline_data->textLines[lineidx].lineHeight);
+
+      float avgCharWidth = 1.2 * (sumWidth / cntGood);
+      float avgCharHeight = min((float)1.05*sumHeight / cntGood, pipeline_data->textLines[lineidx].lineHeight);*/
 
       if (config->debugCharSegmenter)
       {
@@ -1681,7 +1684,7 @@ namespace alpr
 						  fillConvexPoly(tmpImg, rectPoint, Scalar(255, 255, 255));
 						  fillConvexPoly(tmpImg, approx, Scalar(0, 0, 0));
 
-						  Mat tempFindImg(pipeline_data->thresholds[i].size(), CV_8U);
+						  Mat tempFindImg(pipeline_data->thresholds[0].size(), CV_8U);
 						  tmpImg.copyTo(tempFindImg);
 
 						  vector<vector<Point> > tmpContours;
@@ -1690,45 +1693,49 @@ namespace alpr
 
 						  float rectArea= contourArea(rectPoint);
 
+						  if (this->config->debugCharSegmenter) {
+								Mat debugImg = Mat::zeros(tmpImg.size(), tmpImg.type());
+								tmpImg.copyTo(debugImg);
+								cvtColor(debugImg, debugImg, CV_GRAY2BGR);
+								//fillPoly(tmpImg, contours_poly, Scalar(150, 100, 50));
+								for (unsigned int z = 0; z < tmpContours.size(); z++) {
+									drawContours(debugImg, tmpContours, z, Scalar(0, 0, 255), 2);
+								}
+								displayImage(config, "Remove small contours: approx&rect", debugImg);
+								cout << "CHARACTERSEGMENTER approx=" << approx << endl;
+							}
+
+						  //vector<vector<Point>> bigContours;
+						  bool performConvexHull = false;
 						  for (int h = 0; h < tmpContours.size(); h++)
 							{
 							  if (tmpContours[h].size() == 0)
 								continue;
 							  float tmpArea= contourArea(tmpContours[h]);
+							  if (this->config->debugCharSegmenter) {
+								  cout << "CHARACTERSEGMENTER rectArea=" << rectArea << ", rectArea*0.125=" << (rectArea*0.125) << ", tmpArea=" << tmpArea << endl;
+							  }
 
 							  if (tmpArea > rectArea*0.125) {
-								  /*
-								  //find max intersection
-								  vector<Point> bigContour = tmpContours[h];
-								  vector<int> maxIntersectionIdx;
-								  vector<int> approxMaxIntersectionIdx;
-								  for (int t = 0; t < bigContour.size() ; t++) {
-									  vector<int> currIntersectionIdx;
-									  vector<int> approxCurrIntersectionIdx;
-									  for (int p = 0 ; p < approx.size(); p++) {
-										  if (bigContour[t] == approx[p]) {
-											  currIntersectionIdx.push_back(t);
-											  approxCurrIntersectionIdx.push_back(p);
-										  }
-									  }
+								  //bigContours.push_back(tmpContours[h]);
+								  approx.insert(approx.end(), tmpContours[h].begin(), tmpContours[h].end());
+								  performConvexHull = true;
+							  }
 
-									  if (currIntersectionIdx.size() > maxIntersectionIdx.size()) {
-										  maxIntersectionIdx.clear();
-										  approxMaxIntersectionIdx.clear();
-										  for (int k = 0; k < currIntersectionIdx.size(); k++) {
-											  maxIntersectionIdx.push_back(currIntersectionIdx[k]);
-											  approxMaxIntersectionIdx.push_back(approxCurrIntersectionIdx[k]);
-										  }
-									  }
-								  }*/
-
+							  /*if (tmpArea > rectArea*0.125) {
 								  vector<int> intersectionIdx;
 								  vector<int> approxIntersectionIdx;
+								  vector<Point> bigContour = tmpContours[h];
+
+								  if (this->config->debugCharSegmenter) {
+									  cout << "CHARACTERSEGMENTER bigContour=" << bigContour << endl;
+								  }
+
 								  for (int t = 0; t < bigContour.size() ; t++) {
 									  vector<int> currIntersectionIdx;
 									  vector<int> approxCurrIntersectionIdx;
 									  for (int p = 0 ; p < approx.size(); p++) {
-										  if (bigContour[t] == approx[p]) {
+										  if (bigContour[t].x == approx[p].x && bigContour[t].y == approx[p].y) {
 											  intersectionIdx.push_back(t);
 											  approxIntersectionIdx.push_back(p);
 										  }
@@ -1755,10 +1762,16 @@ namespace alpr
 									  partOne.insert(partOne.begin(), partTwo.begin(), partTwo.end());
 								  }
 
-								  if (this->config->debugCharSegmenter) {
-										Mat debugImg = Mat::zeros(tmpImg, tmpImg.type());
+								  if (this->config->debugCharSegmenter)
+								  		cout << "CHARACTERSEGMENTER intersectionIdx.size()=" << intersectionIdx.size() << ", partOne.size()=" << partOne.size() << endl;
+
+								  if (partOne.size() > 0 && this->config->debugCharSegmenter) {
+										Mat debugImg = Mat::zeros(tmpImg.size(), tmpImg.type());
 										tmpImg.copyTo(debugImg);
 										cvtColor(debugImg, debugImg, CV_GRAY2BGR);
+										for (int t = 0; t < partOne.size() - 1; t++) {
+											line(debugImg, approx[partOne[t]], approx[partOne[t+1]], Scalar(255, 0, 0), 3, CV_AA);
+										}
 										//fillPoly(tmpImg, contours_poly, Scalar(150, 100, 50));
 //										drawContours(debugImg, contours_poly, 0, Scalar(0, 0, 255), 2);
 //
@@ -1767,12 +1780,25 @@ namespace alpr
 //											  drawContours(debugImg, contours, wideContoursIdx[j], cv::Scalar(0,255,0), 1);
 //										  }
 //
-//										displayImage(config, "Remove small contours: fillPoly", debugImg);
+										displayImage(config, "Remove small contours: intersection", debugImg);
 
 									}
-							  }
+							  }*/
 							}
+						  if (performConvexHull) {
+							  convexHull(approx, approx, CV_CLOCKWISE, true);
+							  if (this->config->debugCharSegmenter) {
+									Mat debugImg = Mat::zeros(tmpImg.size(), tmpImg.type());
+									tmpImg.copyTo(debugImg);
+									cvtColor(debugImg, debugImg, CV_GRAY2BGR);
+									for (int t = 0; t < approx.size() - 1; t++) {
+										line(debugImg, approx[t], approx[t+1], Scalar(255, 0, 0), 3, CV_AA);
+									}
+									line(debugImg, approx[0], approx[approx.size() - 1], Scalar(255, 0, 0), 3, CV_AA);
+									displayImage(config, "Remove small contours: approx", debugImg);
 
+								}
+						  }
 
             			  contours_poly.push_back(approx);
 
