@@ -184,7 +184,7 @@ namespace alpr
       // Each cluster is the same plate, just analyzed from a slightly different 
       // perspective.  Merge them together and score them as if they are one
 
-      const float MIN_CONFIDENCE = 50;
+      const float MIN_CONFIDENCE = config->resultAggregatorOverallConfidence;//50;
       
 
       // Factor in the position of the plate in the topN list, the confidence, and the template match status
@@ -202,14 +202,20 @@ namespace alpr
           {
             AlprPlate plateCandidate = clusters[unique_plate_idx][i].topNPlates[j];
             
-            if (plateCandidate.overall_confidence < MIN_CONFIDENCE)
-              continue;
+            if (plateCandidate.overall_confidence < MIN_CONFIDENCE) {
+            	if (config->debugGeneral)
+            	          cout << "Result Aggregator:: skip one of cluster plateCandidates: cluster[" << unique_plate_idx
+						  << "], plate[" << i << "], topNPlates[" << j << "]=" << plateCandidate.characters
+						  << ", overall_confidence=" << ", plateCandidate.overall_confidence=" << plateCandidate.overall_confidence
+						  << ", MIN_CONFIDENCE=" << MIN_CONFIDENCE << endl;
+            	continue;
+            }
 
             float score = (plateCandidate.overall_confidence - 60) * 4;
 
             // Add a bonus for matching the template
             if (plateCandidate.matches_template)
-              score += 150;
+              score += 1000;//150;
 
             // Add a bonus the higher the plate is to the #1 position
             // and how frequently it appears there
@@ -268,6 +274,7 @@ namespace alpr
           }
         }
         
+        //for the one cluster (one plate)
         if (sorted_results.size() > 0)
         {
           // Figure out the best region for this cluster
@@ -306,9 +313,9 @@ namespace alpr
     return response;
   }
   
-  ResultRegionScore ResultAggregator::findBestRegion(std::vector<AlprPlateResult> cluster) {
+  ResultRegionScore ResultAggregator::findBestRegion(std::vector<AlprPlateResult> clusterPlates) {
 
-    const float MIN_REGION_CONFIDENCE = 60;
+    const float MIN_REGION_CONFIDENCE = config->resultAggregatorOverallConfidence;//60;
     
     std::map<std::string, float> score_hash;
     std::map<std::string, float> score_count;
@@ -318,12 +325,18 @@ namespace alpr
     response.confidence = 0;
     response.region = "";
     
-    for (unsigned int i = 0; i < cluster.size(); i++)
+    for (unsigned int i = 0; i < clusterPlates.size(); i++)
     {
-      AlprPlateResult plate = cluster[i];
-      
-      if (plate.bestPlate.overall_confidence < MIN_REGION_CONFIDENCE )
-        continue;
+      AlprPlateResult plate = clusterPlates[i];
+      //plate.bestPlate - either the first entry, or the first entry with a postprocessor template match
+      if (plate.bestPlate.overall_confidence < MIN_REGION_CONFIDENCE ) {
+    	  if (config->debugGeneral)
+			  cout << "Result Aggregator:: skip entire cluster due of low overall_confidence of the bestPlate. bestPlate: plate["
+			  	  << i << "], plate.bestPlate.characters="
+			  	  << plate.bestPlate.characters << ", plate.bestPlate.overall_confidence=" << plate.bestPlate.overall_confidence
+			  	  << ", MIN_REGION_CONFIDENCE=" << MIN_REGION_CONFIDENCE << endl;
+    	  continue;
+      }
       
       float score = (float) plate.regionConfidence;
       

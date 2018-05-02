@@ -124,6 +124,8 @@ namespace alpr
       std::string postProcessRegexLetters;
       std::string postProcessRegexNumbers;
 
+      float resultAggregatorOverallConfidence;
+
       bool debugGeneral;
       bool debugTiming;
       bool debugPrewarp;

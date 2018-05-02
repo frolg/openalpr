@@ -338,7 +338,7 @@ namespace alpr
         {
 
           // Set our "best plate" match to either the first entry, or the first entry with a postprocessor template match
-          if (isBestPlateSelected == false && ppResults[pp].matchesTemplate){
+          if (isBestPlateSelected == false && ppResults[pp].matchesTemplate) {
             bestPlateIndex = plateResult.topNPlates.size();
             isBestPlateSelected = true;
           }
