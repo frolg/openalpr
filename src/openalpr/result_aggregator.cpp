@@ -84,12 +84,55 @@ namespace alpr
     return firstElem.first > secondElem.first;
   }
   
+  bool compareScoreAndRuTemplate(const AlprPlate &first, const AlprPlate &second) {
+  	  if (first.matches_template && second.matches_template) {
+  		  if ((first.characters.size() == 9 && second.characters.size() == 9) ||
+  				  (first.characters.size() == 8 && second.characters.size() == 8)) {
+  			  return first.overall_confidence > second.overall_confidence;
+  		  } else if (first.characters.size() == 9) {
+  			  if (first.overall_confidence > second.overall_confidence || second.overall_confidence - first.overall_confidence < 5) {
+  				  return true;
+  			  } else {
+  				  return false;
+  			  }
+  		  } else {//second.characters.size() == 9
+  			if (second.overall_confidence > first.overall_confidence || first.overall_confidence - second.overall_confidence < 5) {
+				  return false;
+			  } else {
+				  return true;
+			  }
+  		  }
+  	  } else if (first.matches_template) {
+  		  return true;
+  	  } else if (second.matches_template) {
+  		  return false;
+  	  }
+      return first.overall_confidence > second.overall_confidence;
+    }
+
   bool plateCompareByConfidence(const AlprPlate &first, const AlprPlate &second)
 	{
-	  if (first.overall_confidence < second.overall_confidence)
-		return false;
-	  return true;
+	  return first.overall_confidence > second.overall_confidence;
 	}
+
+  bool compareAlprPlateResults(const AlprPlateResult &first, const AlprPlateResult &second)
+  	{
+	  float firstMaxOverallConfidence = -1;
+	  for (int k = 0; k < first.topNPlates.size(); k++) {
+		  if (k == 0 || (first.topNPlates[k].overall_confidence > firstMaxOverallConfidence)) {
+			  firstMaxOverallConfidence = first.topNPlates[k].overall_confidence;
+		  }
+	  }
+
+	  float secondMaxOverallConfidence = -1;
+	  for (int k = 0; k < second.topNPlates.size(); k++) {
+		  if (k == 0 || (second.topNPlates[k].overall_confidence > secondMaxOverallConfidence)) {
+			  secondMaxOverallConfidence = second.topNPlates[k].overall_confidence;
+		  }
+	  }
+
+	  return firstMaxOverallConfidence > secondMaxOverallConfidence;
+  	}
 
   AlprFullDetails ResultAggregator::getAggregateResults()
   {
@@ -184,7 +227,7 @@ namespace alpr
       // Each cluster is the same plate, just analyzed from a slightly different 
       // perspective.  Merge them together and score them as if they are one
 
-      const float MIN_CONFIDENCE = config->resultAggregatorOverallConfidence;//50;
+      const float MIN_CONFIDENCE = 50; //config->resultAggregatorOverallConfidence;//50;
       
 
       // Factor in the position of the plate in the topN list, the confidence, and the template match status
@@ -215,7 +258,7 @@ namespace alpr
 
             // Add a bonus for matching the template
             if (plateCandidate.matches_template)
-              score += 1000;//150;
+              score += 150;//1000;//150;
 
             // Add a bonus the higher the plate is to the #1 position
             // and how frequently it appears there
@@ -299,6 +342,7 @@ namespace alpr
             copyResult.topNPlates.push_back(sorted_results[i].second.plate);
           }
           
+          std::sort(copyResult.topNPlates.begin(), copyResult.topNPlates.end(), compareScoreAndRuTemplate);
 
           for (int i = 0; i < firstResult.thresholdOcrLines.size(); i++) {
         	  copyResult.thresholdOcrLines.push_back(firstResult.thresholdOcrLines[i]);
@@ -308,6 +352,8 @@ namespace alpr
         }
 
       }
+
+      std::sort(response.results.plates.begin(), response.results.plates.end(), compareAlprPlateResults);
     }
 
     return response;
@@ -315,7 +361,7 @@ namespace alpr
   
   ResultRegionScore ResultAggregator::findBestRegion(std::vector<AlprPlateResult> clusterPlates) {
 
-    const float MIN_REGION_CONFIDENCE = config->resultAggregatorOverallConfidence;//60;
+    const float MIN_REGION_CONFIDENCE = 60;//config->resultAggregatorOverallConfidence;//60;
     
     std::map<std::string, float> score_hash;
     std::map<std::string, float> score_count;

@@ -128,6 +128,7 @@ namespace alpr
     //ResultAggregator country_aggregator(MERGE_PICK_BEST, topN, config);
     ResultAggregator country_aggregator(MERGE_COMBINE, topN, config);
     //ResultAggregator country_aggregator(MERGE_ON_MATCH_TEMPLATE, topN, config);
+    unsigned int goodPlatesQty = 0;
     for (unsigned int i = 0; i < config->loaded_countries.size(); i++)
     {
       if (config->debugGeneral)
@@ -153,6 +154,12 @@ namespace alpr
       sub_results.results.regionsOfInterest = response.results.regionsOfInterest;
       
       country_aggregator.addResults(sub_results);
+      if (sub_results.results.plates.size() > 0 && sub_results.results.plates[0].topNPlates.size() > 0 && sub_results.results.plates[0].topNPlates[0].overall_confidence > 70) {
+    	  goodPlatesQty++;
+      }
+      if (goodPlatesQty == 3) {
+    	  break;
+      }
     }
     response = country_aggregator.getAggregateResults();
 

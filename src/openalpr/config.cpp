@@ -219,7 +219,7 @@ namespace alpr
     postProcessMinConfidence = getFloat(ini, defaultIni, "", "postprocess_min_confidence", 100);
     postProcessConfidenceSkipLevel = getFloat(ini, defaultIni, "", "postprocess_confidence_skip_level", 100);
 
-    resultAggregatorOverallConfidence = getFloat(ini, defaultIni, "", "result_aggregator_overall_confidence", 50);
+    //resultAggregatorOverallConfidence = getFloat(ini, defaultIni, "", "result_aggregator_overall_confidence", 50);
 
     debugGeneral = 	getBoolean(ini, defaultIni, "", "debug_general",		false);
     debugTiming = 	getBoolean(ini, defaultIni, "", "debug_timing",		false);

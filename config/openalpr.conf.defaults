@@ -69,7 +69,7 @@ ocr_min_font_point = 4
 ; Minimum OCR confidence percent to consider.
 postprocess_min_confidence = 50
 
-result_aggregator_overall_confidence = 40
+;result_aggregator_overall_confidence = 40
 
 ; Any OCR character lower than this will also add an equally likely
 ; chance that the character is incorrect and will be skipped.  Value is a confidence percent

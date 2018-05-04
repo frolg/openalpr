@@ -493,8 +493,7 @@ bool detectandshow(Alpr* alpr, cv::Mat frame, std::string region, bool writeJson
       }
 
       for (int k = 0; k < results.plates[i].topNPlates.size(); k++)
-      {
-    	  if (results.plates[i].topNPlates[k].matches_template && results.plates[i].topNPlates[k].characters.size() == 9) {
+		{
 			// Replace the multiline newline character with a dash
 			std::string no_newline = results.plates[i].topNPlates[k].characters;
 			std::replace(no_newline.begin(), no_newline.end(), '\n','-');
@@ -504,36 +503,8 @@ bool detectandshow(Alpr* alpr, cv::Mat frame, std::string region, bool writeJson
 			  std::cout << "\t pattern_match: " << results.plates[i].topNPlates[k].matches_template;
 
 			std::cout << std::endl;
-    	  }
-      }
-      for (int k = 0; k < results.plates[i].topNPlates.size(); k++)
-		{
-		  if (results.plates[i].topNPlates[k].matches_template && results.plates[i].topNPlates[k].characters.size() == 8) {
-			// Replace the multiline newline character with a dash
-			std::string no_newline = results.plates[i].topNPlates[k].characters;
-			std::replace(no_newline.begin(), no_newline.end(), '\n','-');
-
-			std::cout << "    - " << no_newline << "\t confidence: " << results.plates[i].topNPlates[k].overall_confidence;
-			if (templatePattern.size() > 0 || results.plates[i].regionConfidence > 0)
-			  std::cout << "\t pattern_match: " << results.plates[i].topNPlates[k].matches_template;
-
-			std::cout << std::endl;
-		  }
 		}
-      for (int k = 0; k < results.plates[i].topNPlates.size(); k++)
-		{
-    	  if (!results.plates[i].topNPlates[k].matches_template) {
-			  // Replace the multiline newline character with a dash
-			  std::string no_newline = results.plates[i].topNPlates[k].characters;
-			  std::replace(no_newline.begin(), no_newline.end(), '\n','-');
 
-			  std::cout << "    - " << no_newline << "\t confidence: " << results.plates[i].topNPlates[k].overall_confidence;
-			  if (templatePattern.size() > 0 || results.plates[i].regionConfidence > 0)
-				std::cout << "\t pattern_match: " << results.plates[i].topNPlates[k].matches_template;
-
-			  std::cout << std::endl;
-    	  }
-		}
     }
     if (detected) {
     	detectedCount++;
