@@ -40,6 +40,11 @@ using namespace alpr;
 
 const std::string MAIN_WINDOW_NAME = "ALPR main window";
 
+enum DETECT_RESULT {
+        DETECTED,
+		ONE_INVALID_CHARACTER
+};
+
 const bool SAVE_LAST_VIDEO_STILL = false;
 const std::string LAST_VIDEO_STILL_LOCATION = "/tmp/laststill.jpg";
 const std::string WEBCAM_PREFIX = "/dev/video";
@@ -377,10 +382,12 @@ int main( int argc, const char** argv )
     }
   }
 
-  std::cout << "Total count: " << totalCount << ", detectedCount=" << detectedCount << ", additionalDetectedCount=" << additionalDetectedCount << std::endl;
-  timespec endTime;
-  getTimeMonotonic(&endTime);
-  std::cout << "OpenALPR Total Time: " << diffclock(startTime, endTime) << "ms." << std::endl;
+  if (!outputJson) {
+	  std::cout << "Total count: " << totalCount << ", detectedCount=" << detectedCount << ", additionalDetectedCount=" << additionalDetectedCount << std::endl;
+	  timespec endTime;
+	  getTimeMonotonic(&endTime);
+	  std::cout << "OpenALPR Total Time: " << diffclock(startTime, endTime) << "ms." << std::endl;
+  }
 
   logDetected.close();
   logNotDetected.close();
@@ -582,11 +589,21 @@ std::string fnameToLat(std::string fname){
 			char latCh = it->second;
 		   //fname.replace(i, 1, latCh);
 			newName.push_back(latCh);
-		} else if ((fname[i] >= '0' && fname[i] <= '9') || (fname[i] >= 'A' && fname[i] <= 'Z') || (fname[i] >= 'a' && fname[i] <= 'z') || fname[i] == '.') {
+		} else if (fname[i] >= 'a' && fname[i] <= 'z') {
+			newName.push_back(toupper(fname[i]));
+		}  else if ((fname[i] >= '0' && fname[i] <= '9') || (fname[i] >= 'A' && fname[i] <= 'Z') || fname[i] == '.') {
 			newName.push_back(fname[i]);
 		}
 
 	}
 	return newName;
 }
+
+//DETECT_RESULT isDetected(std::string fname, std::vector<std::string> detectedPlates) {
+//	for (unsigned int i = 0; i < detectedPlates.size(); ++i) {
+//		std::string plate = detectedPlates[i];
+//	}
+//
+//  return DEFDIR + std::to_string(ms) + ".jpeg";
+//}
 

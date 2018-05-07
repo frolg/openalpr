@@ -22,6 +22,7 @@
 #include "segmentation/charactersegmenter.h"
 
 using namespace cv;
+using namespace std;
 
 namespace alpr
 {
@@ -56,7 +57,7 @@ namespace alpr
 			}
 			pipeline_data->thresholdOcrLines.push_back(str);
 			if (this->config->debugCharSegmenter)
-				std::cout << "===================================== OCR LINE chars in threshols[" << i << "]: " << str << std::endl;
+				std::cout << "====================================== OCR LINE chars in threshols[" << i << "]: " << str << std::endl;
 	}
 
     segmenter.segment();

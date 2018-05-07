@@ -129,6 +129,7 @@ namespace alpr
     ResultAggregator country_aggregator(MERGE_COMBINE, topN, config);
     //ResultAggregator country_aggregator(MERGE_ON_MATCH_TEMPLATE, topN, config);
     unsigned int goodPlatesQty = 0;
+    bool findVeryGoodResult = false;
     for (unsigned int i = 0; i < config->loaded_countries.size(); i++)
     {
       if (config->debugGeneral)
@@ -147,17 +148,26 @@ namespace alpr
         iter_aggregator.addResults(iter_results);
       }
       
+      if (config->debugGeneral)
+              cout << "Analyzing: BEFORE iter_aggregator.getAggregateResults()" << endl;
       AlprFullDetails sub_results = iter_aggregator.getAggregateResults();
+      if (config->debugGeneral)
+              cout << "Analyzing: AFTER iter_aggregator.getAggregateResults()" << endl;
       sub_results.results.epoch_time = start_time;
       sub_results.results.img_width = img.cols;
       sub_results.results.img_height = img.rows;
       sub_results.results.regionsOfInterest = response.results.regionsOfInterest;
       
       country_aggregator.addResults(sub_results);
-      if (sub_results.results.plates.size() > 0 && sub_results.results.plates[0].topNPlates.size() > 0 && sub_results.results.plates[0].topNPlates[0].overall_confidence > 70) {
-    	  goodPlatesQty++;
+      if (sub_results.results.plates.size() > 0 && sub_results.results.plates[0].topNPlates.size() > 0) {
+    	  if (sub_results.results.plates[0].topNPlates[0].overall_confidence > 86 && sub_results.results.plates[0].topNPlates[0].matches_template) {
+    		  findVeryGoodResult = true;
+    	  }
+    	  if (sub_results.results.plates[0].topNPlates[0].overall_confidence > 70) {
+    		  goodPlatesQty++;
+    	  }
       }
-      if (goodPlatesQty == 3) {
+      if (goodPlatesQty == 3 || findVeryGoodResult) {
     	  break;
       }
     }

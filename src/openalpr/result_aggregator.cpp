@@ -136,10 +136,19 @@ namespace alpr
 
   AlprFullDetails ResultAggregator::getAggregateResults()
   {
+
+	  if (config->debugGeneral)
+	       cout << "Result Aggregator::getAggregateResults(), all_results.size()=" << all_results.size() << endl;
     assert(all_results.size() > 0);
 
-    if (all_results.size() == 1)
-      return all_results[0];
+    //std::vector<AlprPlateResult> plates;
+    if (all_results.size() == 1) {
+    	for (unsigned int i = 0; i < all_results[0].results.plates.size(); i++) {
+    		std::sort(all_results[0].results.plates[i].topNPlates.begin(), all_results[0].results.plates[i].topNPlates.end(), compareScoreAndRuTemplate);
+    	}
+    	std::sort(all_results[0].results.plates.begin(), all_results[0].results.plates.end(), compareAlprPlateResults);
+    	return all_results[0];
+    }
 
 
     AlprFullDetails response;
@@ -343,6 +352,12 @@ namespace alpr
           }
           
           std::sort(copyResult.topNPlates.begin(), copyResult.topNPlates.end(), compareScoreAndRuTemplate);
+
+          if (config->debugGeneral) {
+        	  for (int i = 0; i < copyResult.topNPlates.size(); i++)
+				  cout << "Result Aggregator:: copyResult.topNPlates[" << i << "]=" << copyResult.topNPlates[i].characters << endl;
+        	  cout << endl;
+          }
 
           for (int i = 0; i < firstResult.thresholdOcrLines.size(); i++) {
         	  copyResult.thresholdOcrLines.push_back(firstResult.thresholdOcrLines[i]);
