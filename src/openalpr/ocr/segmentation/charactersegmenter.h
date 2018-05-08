@@ -68,8 +68,7 @@ namespace alpr
 
       cv::Mat getCharBoxMask(cv::Mat img_threshold, std::vector<cv::Rect> charBoxes);
 
-      void removeSmallContours(float avgCharHeight,  float avgCharWidth, TextLine textLine);
-      void removeSmallContours1(float avgCharHeight,  float avgCharWidth, TextLine textLine);
+      void removeSmallContours(std::vector<cv::Mat> thresholds, float avgCharHeight, TextLine textLine);
       void removeSmallContours2(float avgCharHeight,  float avgCharWidth, TextLine textLine);
 
       std::vector<cv::Rect> getHistogramBoxes(HistogramVertical histogram, float avgCharWidth, float avgCharHeight, float* score);

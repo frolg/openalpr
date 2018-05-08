@@ -41,8 +41,9 @@ using namespace alpr;
 const std::string MAIN_WINDOW_NAME = "ALPR main window";
 
 enum DETECT_RESULT {
-        DETECTED,
-		ONE_INVALID_CHARACTER
+        EQUALS,
+		ONE_DIFF,
+		MORE_THAN_ONE_DIFF
 };
 
 const bool SAVE_LAST_VIDEO_STILL = false;
@@ -53,6 +54,7 @@ const std::string DEFDIR = "/home/srv/work/plateimages/";
 const std::string LOGDIR = "/home/srv/work/logs/";
 MotionDetector motiondetector;
 bool do_motiondetection = true;
+bool do_detection_test = false;
 
 /** Function Headers */
 bool detectandshow(Alpr* alpr, cv::Mat frame, std::string region, bool writeJson);
@@ -61,6 +63,7 @@ bool is_supported_image(std::string image_file);
 std::string fname();
 std::string fnameToLat(std::string fname);
 void process_dir(std::string dir, Alpr alpr, bool outputJson);
+DETECT_RESULT checkDiff(std::string str1, std::string str2);
 
 bool measureProcessingTime = false;
 std::string templatePattern;
@@ -72,9 +75,11 @@ bool program_active = true;
 static int totalCount = 0;
 static int detectedCount = 0;
 static int additionalDetectedCount = 0;
+static int oneDiffDetectedCount = 0;
 
 std::ofstream logDetected;
 std::ofstream logNotDetected;
+std::ofstream logOneDiff;
 
 int main( int argc, const char** argv )
 {
@@ -117,6 +122,7 @@ int main( int argc, const char** argv )
   TCLAP::SwitchArg detectRegionSwitch("d","detect_region","Attempt to detect the region of the plate image.  [Experimental]  Default=off", cmd, false);
   TCLAP::SwitchArg clockSwitch("","clock","Measure/print the total time to process image and all plates.  Default=off", cmd, false);
   TCLAP::SwitchArg motiondetect("", "motion", "Use motion detection on video file or stream.  Default=off", cmd, false);
+  TCLAP::SwitchArg do_detection_test("t", "test", "Check detection result by the file name.  Default=off", cmd, false);
   TCLAP::SwitchArg saveFrameSwitch("s","saveframe","Save frame with recognized plate to /var/lib/openalpr/plateimages.  [Experimental]  Default=off", cmd, false);
 
   try
@@ -165,6 +171,7 @@ int main( int argc, const char** argv )
 
 	logDetected.open(LOGDIR + buf + "_detected.log");
 	logNotDetected.open(LOGDIR + buf + "_not_detected.log");
+	logOneDiff.open(LOGDIR + buf + "_one_diff.log");
   
   cv::Mat frame;
 
@@ -383,7 +390,8 @@ int main( int argc, const char** argv )
   }
 
   if (!outputJson) {
-	  std::cout << "Total count: " << totalCount << ", detectedCount=" << detectedCount << ", additionalDetectedCount=" << additionalDetectedCount << std::endl;
+	  std::cout << "Total count: " << totalCount << ", detectedCount=" << detectedCount
+			  << ", oneDiffDetectedCount=" << oneDiffDetectedCount << ", additionalDetectedCount=" << additionalDetectedCount << std::endl;
 	  timespec endTime;
 	  getTimeMonotonic(&endTime);
 	  std::cout << "OpenALPR Total Time: " << diffclock(startTime, endTime) << "ms." << std::endl;
@@ -391,6 +399,7 @@ int main( int argc, const char** argv )
 
   logDetected.close();
   logNotDetected.close();
+  logOneDiff.close();
 
   return 0;
 }
@@ -471,6 +480,8 @@ bool detectandshow(Alpr* alpr, cv::Mat frame, std::string region, bool writeJson
   else
   {
 	  bool detected = false;
+	  bool oneDiff = false;
+	  std::string platesWithOneDiff;
 	  totalCount++;
 
     for (int i = 0; i < results.plates.size(); i++)
@@ -485,16 +496,27 @@ bool detectandshow(Alpr* alpr, cv::Mat frame, std::string region, bool writeJson
         std::cout << "State ID: " << results.plates[i].region << " (" << results.plates[i].regionConfidence << "% confidence)" << std::endl;
       
 
-      if (fileName.size() != 0) {
+      if (/*do_detection_test &&*/ fileName.size() != 0) {
     	  std::string newFilename = fnameToLat(fileName);
-//    	  if (debug_mode)
-//    	    	std::cout << "LAT filename: " << newFilename << std::endl;
 		  for (int k = 0; k < results.plates[i].topNPlates.size(); k++)
 			{
 				std::string plateText = results.plates[i].topNPlates[k].characters;
-				if(plateText.compare(newFilename) == 0) {
+				DETECT_RESULT result = checkDiff(newFilename, plateText);
+				if (result == EQUALS) {
 					detected = true;
+					break;
+				} else if (result == ONE_DIFF) {
+					if (!oneDiff) {
+						platesWithOneDiff += plateText;
+					} else {
+						platesWithOneDiff += ", " + plateText;
+					}
+					oneDiff = true;
 				}
+
+//				if(plateText.compare(newFilename) == 0) {
+//					detected = true;
+//				}
 		   }
 
       }
@@ -513,16 +535,24 @@ bool detectandshow(Alpr* alpr, cv::Mat frame, std::string region, bool writeJson
 		}
 
     }
+
     if (detected) {
     	detectedCount++;
+    	std::cout << "DETECTED" << std::endl;
     	logDetected << fileName << std::endl;
     } else {
-    	logNotDetected << fileName << std::endl;
-    	std::cout << "NOT DETECTED" << std::endl;
-    	std::cout << "fileName.size()=" << fileName.size() << std::endl;
+
+    	if (oneDiff) {
+    		oneDiffDetectedCount++;
+    		std::cout << "ONE DIFF" << std::endl;
+    		logOneDiff << fileName << " | " << platesWithOneDiff << std::endl;
+    	} else {
+    		std::cout << "NOT DETECTED" << std::endl;
+    		logNotDetected << fileName << std::endl;
+    	}
     	if (fileName.size() != 0) {
     	    std::string newFilename = fnameToLat(fileName);
-    	    std::cout << "newFilename=" << newFilename << std::endl;
+    	    //std::cout << "newFilename=" << newFilename << std::endl;
 			for (int i = 0; i < results.plates.size(); i++) {
 				std::cout << "results.plates[" << i << "].thresholdOcrLines.size()=" << results.plates[i].thresholdOcrLines.size() << std::endl;
 				for (int k = 0; k < results.plates[i].thresholdOcrLines.size(); k++) {
@@ -599,11 +629,44 @@ std::string fnameToLat(std::string fname){
 	return newName;
 }
 
-//DETECT_RESULT isDetected(std::string fname, std::vector<std::string> detectedPlates) {
+//DETECT_RESULT detectedType(std::string fname, std::vector<std::string> detectedPlates) {
 //	for (unsigned int i = 0; i < detectedPlates.size(); ++i) {
 //		std::string plate = detectedPlates[i];
 //	}
-//
-//  return DEFDIR + std::to_string(ms) + ".jpeg";
 //}
+
+DETECT_RESULT checkDiff(std::string str1, std::string str2) {
+//	std::cout << "checkDiff: " << str1 << ", " << str2;
+	if (abs(str1.size() - str2.size()) > 1) {
+//		std::cout << " MORE_THAN_ONE_DIFF" << std::endl;
+		return MORE_THAN_ONE_DIFF;
+	}
+	int s = 0;
+	int e1 = str1.size() - 1;
+	int e2 = str2.size() - 1;
+	int minLength = std::min(e1 + 1, e2 + 1);
+
+	while (s < minLength && str1[s] == str2[s]) {
+		s++;
+	}
+
+	while (e1 >= 0 && e2 >= 0 && str1[e1] == str2[e2]) {
+		e1--;
+		e2--;
+	}
+
+	if (s == str1.size() && e1 == -1 && e2 == -1) {
+//		std::cout << " EQUALS" << std::endl;
+		return EQUALS;
+	}
+
+	if (e1 <= s && e2 <= s) {
+//		std::cout << " ONE_DIFF" << std::endl;
+		return ONE_DIFF;
+	}
+//	std::cout << " MORE_THAN_ONE_DIFF" << std::endl;
+	return MORE_THAN_ONE_DIFF;
+
+}
+
 
