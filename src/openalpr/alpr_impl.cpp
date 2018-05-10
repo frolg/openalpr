@@ -148,11 +148,7 @@ namespace alpr
         iter_aggregator.addResults(iter_results);
       }
       
-      if (config->debugGeneral)
-              cout << "Analyzing: BEFORE iter_aggregator.getAggregateResults()" << endl;
       AlprFullDetails sub_results = iter_aggregator.getAggregateResults();
-      if (config->debugGeneral)
-              cout << "Analyzing: AFTER iter_aggregator.getAggregateResults()" << endl;
       sub_results.results.epoch_time = start_time;
       sub_results.results.img_width = img.cols;
       sub_results.results.img_height = img.rows;
@@ -355,7 +351,7 @@ namespace alpr
         {
 
           // Set our "best plate" match to either the first entry, or the first entry with a postprocessor template match
-          if (isBestPlateSelected == false && ppResults[pp].matchesTemplate) {
+          if (isBestPlateSelected == false && ppResults[pp].matchesTemplate){
             bestPlateIndex = plateResult.topNPlates.size();
             isBestPlateSelected = true;
           }

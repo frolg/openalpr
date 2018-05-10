@@ -67,8 +67,8 @@ namespace alpr
 
     //transformed to crop image
     if (pipeline_data->config->debugPlateCorners) {
-		std::cout << "EDGEFINDER INIT pipeline_data->textLines[0].topLine.p1=" << pipeline_data->textLines[0].topLine.p1 << ", p2=" << pipeline_data->textLines[0].topLine.p2 << std::endl;
-		std::cout << "EDGEFINDER INIT pipeline_data->textLines[0].bottomLine.p1=" << pipeline_data->textLines[0].bottomLine.p1 << ", p2=" << pipeline_data->textLines[0].bottomLine.p2 << std::endl;
+		  std::cout << "EDGEFINDER INIT pipeline_data->textLines[0].topLine.p1=" << pipeline_data->textLines[0].topLine.p1 << ", p2=" << pipeline_data->textLines[0].topLine.p2 << std::endl;
+		  std::cout << "EDGEFINDER INIT pipeline_data->textLines[0].bottomLine.p1=" << pipeline_data->textLines[0].bottomLine.p1 << ", p2=" << pipeline_data->textLines[0].bottomLine.p2 << std::endl;
 	  }
 
     
@@ -77,8 +77,8 @@ namespace alpr
     //todo sol
     if (high_contrast)
     {
-    	if (pipeline_data->config->debugGeneral)
-    	    				  std::cout << "==================================== EDGEFINDER high_contrast=true ====================================" << std::endl;
+    	if (pipeline_data->config->debugPlateCorners)
+    	  std::cout << "==================================== EDGEFINDER high_contrast=true ====================================" << std::endl;
       //int expandX = (int) ((float) pipeline_data->crop_gray.cols) * 0.5f;
       //int expandY = (int) ((float) pipeline_data->crop_gray.rows) * 0.5f;
       int expandX = (int) ((float) pipeline_data->crop_gray.cols) * 0.5f;
@@ -94,8 +94,10 @@ namespace alpr
     }
     else //if (tlc.longerSegment.length > tlc.charHeight * 3)
     {
-    	if (pipeline_data->config->debugGeneral)
-    			  std::cout << "EDGEFINDER tlc.longerSegment.length > tlc.charHeight * 3: tlc.longerSegment.length=" << tlc.longerSegment.length << ", tlc.charHeight=" << tlc.charHeight << std::endl;
+    	if (pipeline_data->config->debugPlateCorners) {
+    	  std::cout << "==================================== EDGEFINDER high_contrast=false ====================================" << std::endl;
+    		//std::cout << "EDGEFINDER tlc.longerSegment.length > tlc.charHeight * 3: tlc.longerSegment.length=" << tlc.longerSegment.length << ", tlc.charHeight=" << tlc.charHeight << std::endl;
+      }
 //      float charHeightToPlateWidthRatio = pipeline_data->config->plateWidthMM / pipeline_data->config->avgCharHeightMM;
 //      float idealPixelWidth = tlc.charHeight *  (charHeightToPlateWidthRatio * 1.03);	// Add 3% so we don't clip any characters
 //
@@ -107,10 +109,10 @@ namespace alpr
       int verticalRightOffset = 0;
       float horizontalOffset = 0;
       float avgCharWidth = 0;
-      if (pipeline_data->config->debugCharAnalysis) {
-			//Rect ra(boundingRect(contours.contours[i]));
-			cout << "EDGEFINDER pipeline_data->textLines[0].textContours.size()=" << pipeline_data->textLines[0].textContours.size() << ", goodIndices=" << pipeline_data->textLines[0].textContours.getGoodIndicesCount() << endl;
-		}
+      if (pipeline_data->config->debugPlateCorners) {
+			  //Rect ra(boundingRect(contours.contours[i]));
+			  cout << "EDGEFINDER pipeline_data->textLines[0].textContours.size()=" << pipeline_data->textLines[0].textContours.size() << ", goodIndices=" << pipeline_data->textLines[0].textContours.getGoodIndicesCount() << endl;
+		  }
       int cntGood = 0;
       int sumWidth = 0;
       int maxWidth = 0;
@@ -119,27 +121,27 @@ namespace alpr
       bool isFirstFound = false;
       int firstHeight = 0;
       for (unsigned int i = 0; i < pipeline_data->textLines[0].textContours.size(); i++)
-      	  {
+      {
 
-      		if (pipeline_data->textLines[0].textContours.goodIndices[i] == false)
-      		  continue;
-      		Rect charRect(boundingRect(pipeline_data->textLines[0].textContours.contours[i]));
-      		cntGood++;
-      		sumWidth += charRect.width;
-      		if (charRect.width > maxWidth) {
-      			maxWidth = charRect.width;
-      		}
-      		if (isFirst) {
-      			isFirst = false;
-      			isSecond = true;
-      			firstHeight = charRect.height;
-      		} else if (isSecond) {
-      			isSecond = false;
-      			if (charRect.height > firstHeight * 1.15) {
-      				isFirstFound = true;
-      			}
-      		}
-      	  }
+        if (pipeline_data->textLines[0].textContours.goodIndices[i] == false)
+          continue;
+        Rect charRect(boundingRect(pipeline_data->textLines[0].textContours.contours[i]));
+        cntGood++;
+        sumWidth += charRect.width;
+        if (charRect.width > maxWidth) {
+          maxWidth = charRect.width;
+        }
+        if (isFirst) {
+          isFirst = false;
+          isSecond = true;
+          firstHeight = charRect.height;
+        } else if (isSecond) {
+          isSecond = false;
+          if (charRect.height > firstHeight * 1.15) {
+            isFirstFound = true;
+          }
+        }
+      }
 
       avgCharWidth = 1.2 * (sumWidth / cntGood);//add space between characters
 
@@ -182,7 +184,7 @@ namespace alpr
 
 	  if (cntGood < 9) {
 		  int potentialCharsQtyInCharArea = (int)(foundCharsAreaWidth / avgCharWidth);//max ((int)(foundCharsAreaWidth / avgCharWidth), cntGood);
-		  if (pipeline_data->config->debugCharAnalysis) {
+		  if (pipeline_data->config->debugPlateCorners) {
 			  cout << "EDGEFINDER cntGood=" << cntGood << ", fromLeftToFirstChar=" << fromLeftToFirstChar << ", fromRightToLastChar=" << fromRightToLastChar
 					  << ", foundCharsAreaWidth=" << foundCharsAreaWidth << ", avgCharWidth=" << avgCharWidth << ", potentialCharsQtyInCharArea=" << potentialCharsQtyInCharArea
 					  << ", maxWidth=" << maxWidth << ", isFirstFound=" << isFirstFound << endl;
@@ -197,17 +199,16 @@ namespace alpr
 				  cout << "EDGEFINDER potentialCharsQtyInLeft=" << potentialCharsQtyInLeft << ", potentialCharsQtyInRight=" << potentialCharsQtyInRight << endl;
 
 			  if (potentialCharsQtyInLeft < missingCharsQty) {
-				  if (!isFirstFound) {
-					  //int offsetFromCharArea = (int) ((missingCharsQty - potentialCharsQtyInLeft)*maxWidth * 1.2);
+				  //if (!isFirstFound) {//todo sol test
+					  /*int offsetFromCharArea = (int) ((missingCharsQty - potentialCharsQtyInLeft)*maxWidth * 1.2);*/
 					  int offsetFromCharArea = (int) missingCharsQty*maxWidth * 1.2;
-					  //verticalLeftOffset = offsetFromCharArea - fromLeftToFirstChar;
 					  verticalLeftOffset = offsetFromCharArea - fromLeftToFirstChar;
-				  if (pipeline_data->config->debugCharAnalysis)
-					  cout << "EDGEFINDER leftOffsetFromCharArea=" << offsetFromCharArea << ", verticalLeftOffset=" << verticalLeftOffset << endl;
-				  } else if (potentialCharsQtyInLeft < 1) {
-					  int offsetFromCharArea = (int) maxWidth * 1.2;
-					  verticalLeftOffset = offsetFromCharArea - fromLeftToFirstChar;
-				  }
+				    if (pipeline_data->config->debugCharAnalysis)
+					    cout << "EDGEFINDER leftOffsetFromCharArea=" << offsetFromCharArea << ", verticalLeftOffset=" << verticalLeftOffset << endl;
+				  //} else if (potentialCharsQtyInLeft < 1) {
+					//  int offsetFromCharArea = (int) maxWidth * 1.2;
+					//  verticalLeftOffset = offsetFromCharArea - fromLeftToFirstChar;
+				  //}
 			  }
 			  if (potentialCharsQtyInRight < missingCharsQty) {
 				  //int offsetFromCharArea = (int) ((missingCharsQty - potentialCharsQtyInRight)*avgCharWidth);
@@ -326,23 +327,21 @@ namespace alpr
 
 
     if (pipeline_data->config->debugPlateCorners)
-	{
-	  Mat debugImg(pipeline_data->crop_gray.size(), pipeline_data->crop_gray.type());
-	  pipeline_data->crop_gray.copyTo(debugImg);
-	  for (unsigned int i = 0; i < pipeline_data->textLines.size(); i++) {
-		  line(debugImg, corners[0], corners[1], Scalar(255, 255, 255), 1, CV_AA);
-		  line(debugImg, corners[3], corners[2], Scalar(255, 255, 255), 1, CV_AA);
-		  line(debugImg, corners[0], corners[3], Scalar(255, 255, 255), 1, CV_AA);
-		  line(debugImg, corners[1], corners[2], Scalar(255, 255, 255), 1, CV_AA);
-	  }
-	  std::cout << "EDGEFINDER ORIG SIZE: pipeline_data->crop_gray.cols=" << pipeline_data->crop_gray.cols << ", pipeline_data->crop_gray.rows=" << pipeline_data->crop_gray.rows << std::endl;
-	  std::cout << "EDGEFINDER NEW SIZE: width=" << (corners[1].x - corners[0].x) << ", height=" << (corners[3].y - corners[0].y) << std::endl;
-	  std::cout << "EDGEFINDER NEW CORNERS top: (" << corners[0].x << ", " << corners[0].y << "), (" << corners[1].x << ", " << corners[1].y << ")" << std::endl;
-	  std::cout << "EDGEFINDER NEW CORNERS bottom: (" << corners[3].x << ", " << corners[3].y << "), (" << corners[2].x << ", " << corners[2].y << ")" << std::endl;
-	  displayImage(pipeline_data->config, "Plate corners (EDGEFINDER) NEW CORNERS", debugImg);
-
-
-	}
+    {
+      Mat debugImg(pipeline_data->crop_gray.size(), pipeline_data->crop_gray.type());
+      pipeline_data->crop_gray.copyTo(debugImg);
+      for (unsigned int i = 0; i < pipeline_data->textLines.size(); i++) {
+        line(debugImg, corners[0], corners[1], Scalar(255, 255, 255), 1, CV_AA);
+        line(debugImg, corners[3], corners[2], Scalar(255, 255, 255), 1, CV_AA);
+        line(debugImg, corners[0], corners[3], Scalar(255, 255, 255), 1, CV_AA);
+        line(debugImg, corners[1], corners[2], Scalar(255, 255, 255), 1, CV_AA);
+      }
+      std::cout << "EDGEFINDER ORIG SIZE: pipeline_data->crop_gray.cols=" << pipeline_data->crop_gray.cols << ", pipeline_data->crop_gray.rows=" << pipeline_data->crop_gray.rows << std::endl;
+      std::cout << "EDGEFINDER NEW SIZE: width=" << (corners[1].x - corners[0].x) << ", height=" << (corners[3].y - corners[0].y) << std::endl;
+      std::cout << "EDGEFINDER NEW CORNERS top: (" << corners[0].x << ", " << corners[0].y << "), (" << corners[1].x << ", " << corners[1].y << ")" << std::endl;
+      std::cout << "EDGEFINDER NEW CORNERS bottom: (" << corners[3].x << ", " << corners[3].y << "), (" << corners[2].x << ", " << corners[2].y << ")" << std::endl;
+      displayImage(pipeline_data->config, "Plate corners (EDGEFINDER) NEW CORNERS", debugImg);
+    }
 
     // Re-crop an image (from the original image) using the new coordinates
     Transformation imgTransform(pipeline_data->grayImg, pipeline_data->crop_gray, pipeline_data->regionOfInterest);
@@ -384,7 +383,7 @@ namespace alpr
 
 
       vector<Point2f> textAreaRemapped = imgTransform.transformSmallPointsToBigImage(pipeline_data->textLines[i].textArea);
-	vector<Point2f> linePolygonRemapped = imgTransform.transformSmallPointsToBigImage(pipeline_data->textLines[i].linePolygon);
+	    vector<Point2f> linePolygonRemapped = imgTransform.transformSmallPointsToBigImage(pipeline_data->textLines[i].linePolygon);
 
       std::vector<std::vector<cv::Point> > newContours;
       for (unsigned int c = 0; c < tlc.textLine.textContours.contours.size(); c++) {
@@ -398,11 +397,11 @@ namespace alpr
     	  for (unsigned int n = 0; n < contourRemapped.size(); n++)
     		  contourRemappedInt.push_back(Point(round(contourRemapped[n].x), round(contourRemapped[n].y)));
     	  newContours.push_back(contourRemappedInt);
-		}
+		  }
       //tlc.textLine.textContours.contours = newContours;
       tlc.textLine.textContours.contours.clear();
-		for (unsigned int n = 0; n < newContours.size(); n++)
-			tlc.textLine.textContours.contours.push_back(newContours[n]);
+      for (unsigned int n = 0; n < newContours.size(); n++)
+        tlc.textLine.textContours.contours.push_back(newContours[n]);
       newLines.push_back(TextLine(textAreaRemapped, linePolygonRemapped, Size(), tlc.textLine.textContours));
     }
     //pipeline_data->textLines = newLines;
@@ -492,6 +491,7 @@ namespace alpr
     return cornerFinder.findPlateCorners();
   }
   
+  //todo sol try!
   vector<cv::Point> EdgeFinder::highContrastDetection(Mat newCrop, vector<TextLine> newLines) {
     
     

@@ -486,7 +486,7 @@ bool detectandshow(Alpr* alpr, cv::Mat frame, std::string region, bool writeJson
 
     for (int i = 0; i < results.plates.size(); i++)
     {
-    	std::cout << "plate" << i << " thresholdOcrLines.size()=" << results.plates[i].thresholdOcrLines.size() << std::endl;
+      std::cout << "plate" << i << " thresholdOcrLines.size()=" << results.plates[i].thresholdOcrLines.size() << std::endl;
       std::cout << "plate" << i << ": " << results.plates[i].topNPlates.size() << " results";
       if (measureProcessingTime)
         std::cout << " -- Processing Time = " << results.plates[i].processing_time_ms << "ms.";

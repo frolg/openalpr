@@ -48,17 +48,17 @@ namespace alpr
     }
 
     for (unsigned int i = 0; i < pipeline_data->thresholds.size(); i++)
-	{
-		std::vector<OcrChar> ocrChars = recognize_line_as_text(pipeline_data->thresholds[i]);
-			string str;
-			for (unsigned int k = 0; k < ocrChars.size(); k++) {
-				str.append(ocrChars[k].letter);
+    {
+      std::vector<OcrChar> ocrChars = recognize_line_as_text(pipeline_data->thresholds[i]);
+        string str;
+        for (unsigned int k = 0; k < ocrChars.size(); k++) {
+          str.append(ocrChars[k].letter);
 
-			}
-			pipeline_data->thresholdOcrLines.push_back(str);
-			if (this->config->debugCharSegmenter)
-				std::cout << "====================================== OCR LINE chars in threshols[" << i << "]: " << str << std::endl;
-	}
+        }
+        pipeline_data->thresholdOcrLines.push_back(str);
+        if (this->config->debugCharSegmenter)
+          std::cout << "====================================== OCR LINE chars in threshols[" << i << "]: " << str << std::endl;
+    }
 
     segmenter.segment();
     
@@ -119,152 +119,152 @@ namespace alpr
 
       vector<cv::Rect> newLineCharRegions;
       for (unsigned int c = 0; c < pipeline_data->charRegions[line_idx].size(); c++) {
-		Rect charRegion = pipeline_data->charRegions[line_idx][c];
-		vector<vector<OcrChar>> charRegionInnerOcrCharsForAllThresholds;
+        Rect charRegion = pipeline_data->charRegions[line_idx][c];
+        vector<vector<OcrChar>> charRegionInnerOcrCharsForAllThresholds;
 
-		int thresholdWithMaxConfidenceId = -1;
-		int thresholdMaxConfidence = 0;
+        int thresholdWithMaxConfidenceId = -1;
+        int thresholdMaxConfidence = 0;
 
-		for (unsigned int n = 0; n < thresholdsOcrChars.size(); n++) {
-		  vector<OcrChar> lineOcrChars = thresholdsOcrChars[n];
-		  vector<OcrChar> innerOcrCharsInCharRegion;//OCR chars for the current charRegion and current threshold
-		  for (unsigned int k = 0; k < lineOcrChars.size(); k++) {
-			  Rect r = lineOcrChars[k].rect;
-			  if (r.x > charRegion.x + charRegion.width) {
-				  break;
-			  }
-			  int xCenter =  r.x + (r.width / 2);
-			  if (charRegion.x <= xCenter && charRegion.x + charRegion.width >= xCenter) {
-				  if (lineOcrChars[k].confidence > thresholdMaxConfidence) {
-					  thresholdMaxConfidence = lineOcrChars[k].confidence;
-					  thresholdWithMaxConfidenceId = n;
-				  }
-				  innerOcrCharsInCharRegion.push_back(lineOcrChars[k]);
-			  }
-		  }
-		  charRegionInnerOcrCharsForAllThresholds.push_back(innerOcrCharsInCharRegion);
-		  if (this->config->debugCharSegmenter)
-		  		std::cout << "OCR find " << innerOcrCharsInCharRegion.size() << " symbols in char region, id = " << c
-				<< ", charRegionInnerOcrCharsForAllThresholds[" << n << "].size()=" << charRegionInnerOcrCharsForAllThresholds[n].size() << std::endl;
-		}
-		unsigned int ocrCharsSize = 0;
-		if (thresholdWithMaxConfidenceId > -1)
-			ocrCharsSize = charRegionInnerOcrCharsForAllThresholds[thresholdWithMaxConfidenceId].size();
-		if (this->config->debugCharSegmenter)
-			std::cout << "OCR char region, id = " << c << ": thresholdWithMaxConfidenceId=" << thresholdWithMaxConfidenceId
-				<< ", ocrCharsSize=" << ocrCharsSize << ", charRegion.width=" << charRegion.width << ", avgGoodContourWidth=" << avgGoodContourWidth << std::endl;
+        for (unsigned int n = 0; n < thresholdsOcrChars.size(); n++) {
+          vector<OcrChar> lineOcrChars = thresholdsOcrChars[n];
+          vector<OcrChar> innerOcrCharsInCharRegion;//OCR chars for the current charRegion and current threshold
+          for (unsigned int k = 0; k < lineOcrChars.size(); k++) {
+            Rect r = lineOcrChars[k].rect;
+            if (r.x > charRegion.x + charRegion.width) {
+              break;
+            }
+            int xCenter =  r.x + (r.width / 2);
+            if (charRegion.x <= xCenter && charRegion.x + charRegion.width >= xCenter) {
+              if (lineOcrChars[k].confidence > thresholdMaxConfidence) {
+                thresholdMaxConfidence = lineOcrChars[k].confidence;
+                thresholdWithMaxConfidenceId = n;
+              }
+              innerOcrCharsInCharRegion.push_back(lineOcrChars[k]);
+            }
+          }
+          charRegionInnerOcrCharsForAllThresholds.push_back(innerOcrCharsInCharRegion);
+          if (this->config->debugCharSegmenter)
+              std::cout << "OCR find " << innerOcrCharsInCharRegion.size() << " symbols in char region, id = " << c
+            << ", charRegionInnerOcrCharsForAllThresholds[" << n << "].size()=" << charRegionInnerOcrCharsForAllThresholds[n].size() << std::endl;
+        }
+        unsigned int ocrCharsSize = 0;
+        if (thresholdWithMaxConfidenceId > -1)
+          ocrCharsSize = charRegionInnerOcrCharsForAllThresholds[thresholdWithMaxConfidenceId].size();
+        if (this->config->debugCharSegmenter)
+          std::cout << "OCR char region, id = " << c << ": thresholdWithMaxConfidenceId=" << thresholdWithMaxConfidenceId
+            << ", ocrCharsSize=" << ocrCharsSize << ", charRegion.width=" << charRegion.width << ", avgGoodContourWidth=" << avgGoodContourWidth << std::endl;
 
-		bool newRegion = false;
+        bool newRegion = false;
 
-		if (thresholdWithMaxConfidenceId > -1 && charRegionInnerOcrCharsForAllThresholds[thresholdWithMaxConfidenceId].size() > 1) {
-			vector<OcrChar> innerOcrCharsInCharRegion = charRegionInnerOcrCharsForAllThresholds[thresholdWithMaxConfidenceId];
-			if (charRegion.width > 2.5*avgGoodContourWidth && charRegionInnerOcrCharsForAllThresholds[thresholdWithMaxConfidenceId].size() > 2) {
-				int firstRightX = innerOcrCharsInCharRegion[0].rect.x + innerOcrCharsInCharRegion[0].rect.width;
-				int secondLeftX = innerOcrCharsInCharRegion[1].rect.x;
-				int newX1 = (int)(firstRightX + secondLeftX)/2;
+        if (thresholdWithMaxConfidenceId > -1 && charRegionInnerOcrCharsForAllThresholds[thresholdWithMaxConfidenceId].size() > 1) {
+          vector<OcrChar> innerOcrCharsInCharRegion = charRegionInnerOcrCharsForAllThresholds[thresholdWithMaxConfidenceId];
+          if (charRegion.width > 2.5*avgGoodContourWidth && charRegionInnerOcrCharsForAllThresholds[thresholdWithMaxConfidenceId].size() > 2) {
+            int firstRightX = innerOcrCharsInCharRegion[0].rect.x + innerOcrCharsInCharRegion[0].rect.width;
+            int secondLeftX = innerOcrCharsInCharRegion[1].rect.x;
+            int newX1 = (int)(firstRightX + secondLeftX)/2;
 
-				int secondRightX = innerOcrCharsInCharRegion[1].rect.x + innerOcrCharsInCharRegion[1].rect.width;
-				int thirdLeftX = innerOcrCharsInCharRegion[2].rect.x;
-				int newX2 = (int)(secondRightX + thirdLeftX)/2;
+            int secondRightX = innerOcrCharsInCharRegion[1].rect.x + innerOcrCharsInCharRegion[1].rect.width;
+            int thirdLeftX = innerOcrCharsInCharRegion[2].rect.x;
+            int newX2 = (int)(secondRightX + thirdLeftX)/2;
 
-				int width1 = newX1 - charRegion.x;
-				int width2 = newX2 - newX1;
-				int width3 = charRegion.x + charRegion.width - newX2;
+            int width1 = newX1 - charRegion.x;
+            int width2 = newX2 - newX1;
+            int width3 = charRegion.x + charRegion.width - newX2;
 
-				if (width1 < MIN_CHAR_WIDTH) {
-					width1 = 0;
-					width2 = newX2 - charRegion.x;
-				}
+            if (width1 < MIN_CHAR_WIDTH) {
+              width1 = 0;
+              width2 = newX2 - charRegion.x;
+            }
 
-				if (width2 < MIN_CHAR_WIDTH) {
-					if (width1 != 0) {
-						width1 = newX2 - charRegion.x;
-						width2 = 0;
-					} else {
-						width3 = charRegion.width;
-					}
-				}
+            if (width2 < MIN_CHAR_WIDTH) {
+              if (width1 != 0) {
+                width1 = newX2 - charRegion.x;
+                width2 = 0;
+              } else {
+                width3 = charRegion.width;
+              }
+            }
 
-				if (width3 < MIN_CHAR_WIDTH) {
-					if (width2 != 0) {
-						width2 += width3;
-					} else {
-						width1 = charRegion.width;
-					}
-				}
+            if (width3 < MIN_CHAR_WIDTH) {
+              if (width2 != 0) {
+                width2 += width3;
+              } else {
+                width1 = charRegion.width;
+              }
+            }
 
-				int newX = 0;
-				if (width1 != 0) {
-					Rect rA(charRegion.x, charRegion.y,	width1, charRegion.height);
-					newLineCharRegions.push_back(rA);
-					newX = charRegion.x + width1;
-				}
+            int newX = 0;
+            if (width1 != 0) {
+              Rect rA(charRegion.x, charRegion.y,	width1, charRegion.height);
+              newLineCharRegions.push_back(rA);
+              newX = charRegion.x + width1;
+            }
 
-				if (width2 != 0) {
-					Rect rA;
-					if (newX != 0) {
-						rA = Rect(newX, charRegion.y,	width2, charRegion.height);
-						newX = newX + width2;
-					} else {
-						rA = Rect(charRegion.x, charRegion.y,	width2, charRegion.height);
-						newX = charRegion.x + width2;
-					}
-					newLineCharRegions.push_back(rA);
-				}
+            if (width2 != 0) {
+              Rect rA;
+              if (newX != 0) {
+                rA = Rect(newX, charRegion.y,	width2, charRegion.height);
+                newX = newX + width2;
+              } else {
+                rA = Rect(charRegion.x, charRegion.y,	width2, charRegion.height);
+                newX = charRegion.x + width2;
+              }
+              newLineCharRegions.push_back(rA);
+            }
 
-				if (width3 != 0) {
-					Rect rA;
-					if (newX != 0) {
-						rA = Rect(newX, charRegion.y,	width3, charRegion.height);
-					} else {
-						rA = Rect(charRegion.x, charRegion.y,	width3, charRegion.height);
-					}
-					newLineCharRegions.push_back(rA);
-				}
+            if (width3 != 0) {
+              Rect rA;
+              if (newX != 0) {
+                rA = Rect(newX, charRegion.y,	width3, charRegion.height);
+              } else {
+                rA = Rect(charRegion.x, charRegion.y,	width3, charRegion.height);
+              }
+              newLineCharRegions.push_back(rA);
+            }
 
 
-//				Rect rA(charRegion.x, charRegion.y,	newX1 - charRegion.x, charRegion.height);
-//				Rect rB(newX1, charRegion.y, newX2 - newX1, charRegion.height);
-//				Rect rC(newX2, charRegion.y, charRegion.x + charRegion.width - newX2, charRegion.height);
-//
-//				newLineCharRegions.push_back(rA);
-//				newLineCharRegions.push_back(rB);
-//				newLineCharRegions.push_back(rC);
+    //				Rect rA(charRegion.x, charRegion.y,	newX1 - charRegion.x, charRegion.height);
+    //				Rect rB(newX1, charRegion.y, newX2 - newX1, charRegion.height);
+    //				Rect rC(newX2, charRegion.y, charRegion.x + charRegion.width - newX2, charRegion.height);
+    //
+    //				newLineCharRegions.push_back(rA);
+    //				newLineCharRegions.push_back(rB);
+    //				newLineCharRegions.push_back(rC);
 
-				if (newLineCharRegions.size() > 1) {
-					newRegion = true;
-					if (this->config->debugCharSegmenter) {
-						std::cout << "OCR find NEW char region, id = " << c;
-						for (int yy = 0; yy < newLineCharRegions.size(); yy++) {
-							std::cout << ", rect " << yy << ": " << newLineCharRegions[yy];
-						}
-						std::cout << ", old rect: " << charRegion << std::endl;
-					}
-				}
+            if (newLineCharRegions.size() > 1) {
+              newRegion = true;
+              if (this->config->debugCharSegmenter) {
+                std::cout << "OCR find NEW char region, id = " << c;
+                for (int yy = 0; yy < newLineCharRegions.size(); yy++) {
+                  std::cout << ", rect " << yy << ": " << newLineCharRegions[yy];
+                }
+                std::cout << ", old rect: " << charRegion << std::endl;
+              }
+            }
 
-			} else if (charRegion.width > 1.5*avgGoodContourWidth) {
-				int firstRightX = innerOcrCharsInCharRegion[0].rect.x + innerOcrCharsInCharRegion[0].rect.width;
-				int secondLeftX = innerOcrCharsInCharRegion[1].rect.x;
-				int newRegionX = (int)(firstRightX + secondLeftX)/2;
+            } else if (charRegion.width > 1.3*avgGoodContourWidth) {
+              int firstRightX = innerOcrCharsInCharRegion[0].rect.x + innerOcrCharsInCharRegion[0].rect.width;
+              int secondLeftX = innerOcrCharsInCharRegion[1].rect.x;
+              int newRegionX = (int)(firstRightX + secondLeftX)/2;
 
-				if (newRegionX - charRegion.x >= 4 && charRegion.x + charRegion.width - newRegionX >= 4) {
-					Rect rA(charRegion.x, charRegion.y,	newRegionX - charRegion.x, charRegion.height);
-					Rect rB(newRegionX, charRegion.y, charRegion.x + charRegion.width - newRegionX, charRegion.height);
-					newLineCharRegions.push_back(rA);
-					newLineCharRegions.push_back(rB);
-					newRegion = true;
-					if (this->config->debugCharSegmenter)
-						std::cout << "OCR find NEW char region, id = " << c << ", rect A: " << rA << ", rect B:" << rB << ", old rect: " << charRegion << std::endl;
-				}
-			}
-		}
-		if (!newRegion) {
-			newLineCharRegions.push_back(charRegion);
-			if (this->config->debugCharSegmenter)
-				std::cout << "OCR OLD char region, id = " << c << ", rect: " << charRegion << std::endl;
-		}
+              if (newRegionX - charRegion.x >= 4 && charRegion.x + charRegion.width - newRegionX >= 4) {
+                Rect rA(charRegion.x, charRegion.y,	newRegionX - charRegion.x, charRegion.height);
+                Rect rB(newRegionX, charRegion.y, charRegion.x + charRegion.width - newRegionX, charRegion.height);
+                newLineCharRegions.push_back(rA);
+                newLineCharRegions.push_back(rB);
+                newRegion = true;
+                if (this->config->debugCharSegmenter)
+                  std::cout << "OCR find NEW char region, id = " << c << ", rect A: " << rA << ", rect B:" << rB << ", old rect: " << charRegion << std::endl;
+              }
+            }
+          }
+          if (!newRegion) {
+            newLineCharRegions.push_back(charRegion);
+            if (this->config->debugCharSegmenter)
+              std::cout << "OCR OLD char region, id = " << c << ", rect: " << charRegion << std::endl;
+          }
 
-	  }
+        }
       //newCharRegions.push_back(newLineCharRegions);
       pipeline_data->charRegions[line_idx].clear();
       for (unsigned int t = 0; t < newLineCharRegions.size(); t++) {

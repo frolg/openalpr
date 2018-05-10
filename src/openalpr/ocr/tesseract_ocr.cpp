@@ -59,14 +59,14 @@ namespace alpr
   std::vector<OcrChar> TesseractOcr::recognize_line_as_text(cv::Mat thresholdParam) {
 	  const int SPACE_CHAR_CODE = 32;
 
-	// Make it black text on white background
-	Mat threshold(thresholdParam.size(), thresholdParam.type());
-	thresholdParam.copyTo(threshold);
-	bitwise_not(threshold, threshold);
-	tesseract.SetImage((uchar*) threshold.data,
-			threshold.size().width, threshold.size().height,
-			threshold.channels(), threshold.step1());
-	std::vector<OcrChar> ocrChars;
+    // Make it black text on white background
+    Mat threshold(thresholdParam.size(), thresholdParam.type());
+    thresholdParam.copyTo(threshold);
+    bitwise_not(threshold, threshold);
+    tesseract.SetImage((uchar*) threshold.data,
+    threshold.size().width, threshold.size().height,
+    threshold.channels(), threshold.step1());
+    std::vector<OcrChar> ocrChars;
 
 	  tesseract.SetPageSegMode(PSM_SINGLE_LINE);
 	  tesseract.Recognize(NULL);
@@ -74,38 +74,38 @@ namespace alpr
 	  if (this->config->debugOcr)
 		  printf("=================================thresholds[...] OCR output: %s\n", outText);
 	  tesseract::ResultIterator* ri = tesseract.GetIterator();
-	 tesseract::PageIteratorLevel level = tesseract::RIL_SYMBOL;
-	 int pos = 0;
-	 do
-	 {
-	   const char* symbol = ri->GetUTF8Text(level);
-	   //int len = symbol.length();
+	  tesseract::PageIteratorLevel level = tesseract::RIL_SYMBOL;
+	  int pos = 0;
+    do
+     {
+       const char* symbol = ri->GetUTF8Text(level);
+       //int len = symbol.length();
 
-	   float conf = ri->Confidence(level);
+       float conf = ri->Confidence(level);
 
-	   bool dontcare;
-	  int fontindex = 0;
-	  int pointsize = 0;
-	  const char* fontName = ri->WordFontAttributes(&dontcare, &dontcare, &dontcare, &dontcare, &dontcare, &dontcare, &pointsize, &fontindex);
+       bool dontcare;
+      int fontindex = 0;
+      int pointsize = 0;
+      const char* fontName = ri->WordFontAttributes(&dontcare, &dontcare, &dontcare, &dontcare, &dontcare, &dontcare, &pointsize, &fontindex);
 
-	  // Ignore NULL pointers, spaces, and characters that are way too small to be valid
-	  if(symbol != 0 && symbol[0] != SPACE_CHAR_CODE && pointsize >= config->ocrMinFontSize)
-	  {
-		OcrChar c;
-		c.char_index = pos;
-		c.confidence = conf;
-		c.letter = string(symbol);
-		int x1, y1, x2, y2;
-	    ri->BoundingBox(level, &x1, &y1, &x2, &y2);
-	    c.rect = Rect(x1, y1, x2-x1, y2-y1);
-	    ocrChars.push_back(c);
-		pos++;
-	  }
+      // Ignore NULL pointers, spaces, and characters that are way too small to be valid
+      if(symbol != 0 && symbol[0] != SPACE_CHAR_CODE && pointsize >= config->ocrMinFontSize)
+      {
+      OcrChar c;
+      c.char_index = pos;
+      c.confidence = conf;
+      c.letter = string(symbol);
+      int x1, y1, x2, y2;
+        ri->BoundingBox(level, &x1, &y1, &x2, &y2);
+        c.rect = Rect(x1, y1, x2-x1, y2-y1);
+        ocrChars.push_back(c);
+      pos++;
+      }
 
-	   if (this->config->debugOcr)
-		   printf("=================================charpos %d symbol %s, conf: %f\n", pos, symbol, conf);
+       if (this->config->debugOcr)
+         printf("=================================charpos %d symbol %s, conf: %f\n", pos, symbol, conf);
 
-	 }
+     }
 	   while((ri->Next(level)));
 
 	  tesseract.SetPageSegMode(PSM_SINGLE_CHAR);
@@ -198,28 +198,15 @@ namespace alpr
       for (unsigned int j = 0; j < pipeline_data->charRegions[line_idx].size(); j++)
       {
         //Rect expandedRegion = expandRect( pipeline_data->charRegions[line_idx][j], 2, 2, pipeline_data->thresholds[i].cols, pipeline_data->thresholds[i].rows) ;
-    	Rect expandedRegion = pipeline_data->charRegions[line_idx][j];
-//    	std::cout << "ORIG: " << pipeline_data->charRegions[line_idx][j] << std::endl;
-//    	std::cout << "expandedRegion: " <<expandedRegion << std::endl;
+    	  Rect expandedRegion = pipeline_data->charRegions[line_idx][j];
         tesseract.SetRectangle(expandedRegion.x, expandedRegion.y, expandedRegion.width, expandedRegion.height);
-        try {
-        	tesseract.Recognize(NULL);
-        //} catch (...)
-        }	catch (const std::runtime_error& error)
-        	{
-        	printf("================================= Caught ERROR in OCR recognize =================================\n");
-        	Rect expandedRegionTry = expandRect( pipeline_data->charRegions[line_idx][j], 2, 2, pipeline_data->thresholds[i].cols, pipeline_data->thresholds[i].rows) ;
-		  tesseract.SetRectangle(expandedRegion.x, expandedRegion.y, expandedRegion.width, expandedRegion.height);
-		  tesseract.Recognize(NULL);
-		}
+        tesseract.Recognize(NULL);
+
         tesseract::ResultIterator* ri = tesseract.GetIterator();
         tesseract::PageIteratorLevel level = tesseract::RIL_SYMBOL;
         do
         {
           const char* symbol = ri->GetUTF8Text(level);
-
-          //int len = symbol.length();
-
           float conf = ri->Confidence(level);
 
           bool dontcare;

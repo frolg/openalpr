@@ -58,8 +58,8 @@ namespace alpr
     int horizontalLines = this->plateLines->horizontalLines.size();
     int verticalLines = this->plateLines->verticalLines.size();
     if (pipelineData->config->debugPlateCorners) {
-    cout << "PlateCorners::horizontalLines.size()=" << this->plateLines->horizontalLines.size() << endl;
-    cout << "PlateCorners::verticalLines.size()=" << this->plateLines->verticalLines.size() << endl;
+      cout << "PlateCorners::horizontalLines.size()=" << this->plateLines->horizontalLines.size() << endl;
+      cout << "PlateCorners::verticalLines.size()=" << this->plateLines->verticalLines.size() << endl;
     }
     // layout horizontal lines
     for (int h1 = NO_LINE; h1 < horizontalLines; h1++)

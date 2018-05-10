@@ -63,47 +63,47 @@ namespace alpr
   
   void CharacterSegmenter::removeSmallContoursPreprocess(TextLine textLine) {
 	  for (unsigned int lineidx = 0; lineidx < pipeline_data->textLines.size(); lineidx++)
-	      {
-	        //orig
-	        //todo TEST1
-	        float avgCharHeight = pipeline_data->textLines[lineidx].lineHeight;
-	        float height_to_width_ratio = pipeline_data->config->charHeightMM[lineidx] / pipeline_data->config->charWidthMM[lineidx];
-	        float avgCharWidth = avgCharHeight / height_to_width_ratio;
-	        int sumWidth = 0;
-	        int sumHeight = 0;
-	        int cntGood = 0;
-	        for (unsigned int i = 0; i < pipeline_data->textLines[lineidx].textContours.size(); i++)
-	            {
-	              if (pipeline_data->textLines[lineidx].textContours.goodIndices[i] == false)
-	                continue;
-	              cntGood++;
-	              Rect mr= boundingRect(pipeline_data->textLines[lineidx].textContours.contours[i]);
-	              sumWidth += mr.width;
-	              sumHeight += mr.height;
-	            }
+    {
+      //orig
+      //todo TEST1
+      float avgCharHeight = pipeline_data->textLines[lineidx].lineHeight;
+      float height_to_width_ratio = pipeline_data->config->charHeightMM[lineidx] / pipeline_data->config->charWidthMM[lineidx];
+      float avgCharWidth = avgCharHeight / height_to_width_ratio;
+      int sumWidth = 0;
+      int sumHeight = 0;
+      int cntGood = 0;
+      for (unsigned int i = 0; i < pipeline_data->textLines[lineidx].textContours.size(); i++)
+      {
+        if (pipeline_data->textLines[lineidx].textContours.goodIndices[i] == false)
+          continue;
+        cntGood++;
+        Rect mr= boundingRect(pipeline_data->textLines[lineidx].textContours.contours[i]);
+        sumWidth += mr.width;
+        sumHeight += mr.height;
+      }
 
-	        //140+3
-		    //float avgCharWidth = sumWidth / cntGood;
-	        //float avgCharHeight = min((float)sumHeight / cntGood, pipeline_data->textLines[lineidx].lineHeight);
+      //140+3
+      //float avgCharWidth = sumWidth / cntGood;
+      //float avgCharHeight = min((float)sumHeight / cntGood, pipeline_data->textLines[lineidx].lineHeight);
 
-	        if (config->debugCharSegmenter)
-	        {
-	          cout << "LINE " << lineidx << ": avgCharHeight: " << avgCharHeight << endl;
-	          cout << "LINE " << lineidx << ": avgCharWidth: " << avgCharWidth << endl;
-	        }
+      if (config->debugCharSegmenter)
+      {
+        cout << "LINE " << lineidx << ": avgCharHeight: " << avgCharHeight << endl;
+        cout << "LINE " << lineidx << ": avgCharWidth: " << avgCharWidth << endl;
+      }
 
 
-	        removeSmallContours2(avgCharHeight, avgCharWidth, pipeline_data->textLines[lineidx]);
-	        //removeSmallContours(pipeline_data->thresholds, avgCharHeight, pipeline_data->textLines[lineidx]);
+      removeSmallContours2(avgCharHeight, avgCharWidth, pipeline_data->textLines[lineidx]);
+      //removeSmallContours(pipeline_data->thresholds, avgCharHeight, pipeline_data->textLines[lineidx]);
 
-	        if (this->config->debugCharSegmenter)
-	  		{
-	  		  Mat imgDash = drawImageDashboard(pipeline_data->thresholds, CV_8U, 3);
-	  		  line(imgDash, top.p1, top.p2, Scalar(100, 100, 100), 2, CV_AA);
-	  		  line(imgDash, bottom.p1, bottom.p2, Scalar(100, 100, 100), 1, CV_AA);
-	  		  displayImage(config, "Segmentation after removeSmallContours", imgDash);
-	  		}
-	      }
+      if (this->config->debugCharSegmenter)
+      {
+        Mat imgDash = drawImageDashboard(pipeline_data->thresholds, CV_8U, 3);
+        line(imgDash, top.p1, top.p2, Scalar(100, 100, 100), 2, CV_AA);
+        line(imgDash, bottom.p1, bottom.p2, Scalar(100, 100, 100), 1, CV_AA);
+        displayImage(config, "Segmentation after removeSmallContours", imgDash);
+      }
+    }
   }
 
   void CharacterSegmenter::segment() {
@@ -143,14 +143,14 @@ namespace alpr
             sumHeight += mr.height;
           }
 
-      float avgCharWidth = 1.2 * (sumWidth / cntGood);
-      float avgCharHeight = min((float)1.05*sumHeight / cntGood, pipeline_data->textLines[lineidx].lineHeight);*/
+      float avgCharWidth = sumWidth / cntGood;
+      float avgCharHeight = min((float)sumHeight / cntGood, pipeline_data->textLines[lineidx].lineHeight);*/
 
       if (config->debugCharSegmenter)
       {
         //cout << "LINE " << lineidx << ": avgCharHeight: " << avgCharHeight << " - height_to_width_ratio: " << height_to_width_ratio << endl;
     	  cout << "LINE " << lineidx << ": avgCharHeight: " << avgCharHeight << endl;
-          cout << "LINE " << lineidx << ": avgCharWidth: " << avgCharWidth << endl;
+        cout << "LINE " << lineidx << ": avgCharWidth: " << avgCharWidth << endl;
       }
       
       
@@ -513,8 +513,8 @@ namespace alpr
         }
         else if (w > avgCharWidth * 2  && w <= MAX_SEGMENT_WIDTH * 2 )
         {
-		if (this->config->debugCharSegmenter)
-			cout << "SEGMENTATION not valid char box [" << boxidx << "] by width, check 2*width: w=" << w << ", segmentationMinBoxWidthPx=" << config->segmentationMinBoxWidthPx
+          if (this->config->debugCharSegmenter)
+            cout << "SEGMENTATION not valid char box [" << boxidx << "] by width, check 2*width: w=" << w << ", segmentationMinBoxWidthPx=" << config->segmentationMinBoxWidthPx
 						<< ", MAX_SEGMENT_WIDTH=" << MAX_SEGMENT_WIDTH << endl;
           // Try to split up doubles into two good char regions, check for a break between 40% and 60%
           int leftEdge = allBoxes[boxidx].x + (int) (((float) allBoxes[boxidx].width) * 0.4f);
@@ -541,8 +541,8 @@ namespace alpr
             validBoxes.push_back(Rect(topLeft, allBoxes[boxidx].br()) );
           }
         } else if (this->config->debugCharSegmenter)
-			cout << "SEGMENTATION not valid char box [" << boxidx << "] by width and 2*width: w=" << w << ", segmentationMinBoxWidthPx=" << config->segmentationMinBoxWidthPx
-						<< ", MAX_SEGMENT_WIDTH=" << MAX_SEGMENT_WIDTH << endl;
+            cout << "SEGMENTATION not valid char box [" << boxidx << "] by width and 2*width: w=" << w << ", segmentationMinBoxWidthPx=" << config->segmentationMinBoxWidthPx
+                  << ", MAX_SEGMENT_WIDTH=" << MAX_SEGMENT_WIDTH << endl;
       }
 
       if (rowScore > bestRowScore)
@@ -641,15 +641,15 @@ namespace alpr
         vector<vector<Point> > plateContAll;
 
         if (this->config->debugCharSegmenter) {
-    		cout << "CHARACTERSEGMENTER: pipeline_data->regionOfInterest.x=" << pipeline_data->regionOfInterest.x << ", pipeline_data->regionOfInterest.y=" << pipeline_data->regionOfInterest.y << endl;
-    		cout << "CHARACTERSEGMENTER: pipeline_data->regionOfInterest.width=" << pipeline_data->regionOfInterest.width << ", pipeline_data->regionOfInterest.height=" << pipeline_data->regionOfInterest.height << endl;
-    		cout << "CHARACTERSEGMENTER: pipeline_data->plate_corners: ";
-    		for (unsigned int c = 0; c < pipeline_data->plate_corners.size(); c++)
-    			cout << "[" << pipeline_data->plate_corners[c].x << ", " << pipeline_data->plate_corners[c].y << "]  ";
-    		cout << endl;
-    		cout << "CHARACTERSEGMENTER: pipeline_data->plate_corners: width=" << (pipeline_data->plate_corners[1].x - pipeline_data->plate_corners[0].x);
-    		cout << ", height=" << (pipeline_data->plate_corners[3].y - pipeline_data->plate_corners[0].y) << endl;
-    	}
+          cout << "CHARACTERSEGMENTER: pipeline_data->regionOfInterest.x=" << pipeline_data->regionOfInterest.x << ", pipeline_data->regionOfInterest.y=" << pipeline_data->regionOfInterest.y << endl;
+          cout << "CHARACTERSEGMENTER: pipeline_data->regionOfInterest.width=" << pipeline_data->regionOfInterest.width << ", pipeline_data->regionOfInterest.height=" << pipeline_data->regionOfInterest.height << endl;
+          cout << "CHARACTERSEGMENTER: pipeline_data->plate_corners: ";
+          for (unsigned int c = 0; c < pipeline_data->plate_corners.size(); c++)
+            cout << "[" << pipeline_data->plate_corners[c].x << ", " << pipeline_data->plate_corners[c].y << "]  ";
+          cout << endl;
+          cout << "CHARACTERSEGMENTER: pipeline_data->plate_corners: width=" << (pipeline_data->plate_corners[1].x - pipeline_data->plate_corners[0].x);
+          cout << ", height=" << (pipeline_data->plate_corners[3].y - pipeline_data->plate_corners[0].y) << endl;
+        }
 
         Mat resultMask;// = Mat::zeros(pipeline_data->thresholds[0].size(), CV_8UC1);
 
@@ -773,352 +773,370 @@ namespace alpr
     		  Rect mr = boundingRect(contours[c]);
     		  float ctArea= contourArea(contours[c]);
 
-    		  if (mr.height < MIN_CONTOUR_HEIGHT || mr.width < MIN_CONTOUR_WIDTH || ctArea < MIN_CHAR_AREA)
-    		  {
-    			// Erase it
-    			drawContours(pipeline_data->thresholds[0], contours, c, Scalar(0, 0, 0), -1, 8, hierarchy, 1);
+            if (mr.height < MIN_CONTOUR_HEIGHT || mr.width < MIN_CONTOUR_WIDTH || ctArea < MIN_CHAR_AREA)
+            {
+              // Erase it
+              drawContours(pipeline_data->thresholds[0], contours, c, Scalar(0, 0, 0), -1, 8, hierarchy, 1);
 
-    			if (this->config->debugCharSegmenter) {
-    			  cout << "CHARACTERSEGMENTER remove(1) threshold 0 ";
-    			  if (mr.height < MIN_CONTOUR_HEIGHT) {
-    				  cout << "SHORT ";
-    			  }
-    			  if (mr.width < MIN_CONTOUR_WIDTH) {
-    				  cout << "TIGHT ";
-    			  }
-    			  if (ctArea < MIN_CHAR_AREA) {
-    				  cout << "SMALL ";
-    			  }
-    				cout << "contour[" << c << "] height=" << mr.height << " (min=" << MIN_CONTOUR_HEIGHT << "), width=" << mr.width
-    			  << " (min=" << MIN_CONTOUR_WIDTH << "), ctArea=" << ctArea << " (min=" << MIN_CHAR_AREA << ")" << endl;
-    			}
-    		  } else if (mr.width > MIN_PLATE_WIDTH && mr.height > MIN_PLATE_HEIGHT) {
-            	  if (contourArea(contours[c],true) > 0) {// > 0 inner
-            		  vector<Point> approx;
-            		  double perimeter = arcLength(contours[c], true);
-            		  Mat img = Mat(contours[c]);
-            		  approxPolyDP(img, approx, perimeter * 0.05, true);
-            		  if (approx.size() >= 4) {
-            			  if (!isContourConvex(approx)) {
-            				  /*vector<Point> hull;
-            				  convexHull(approx, hull, CV_CLOCKWISE, true);
-            				  contours_poly.push_back(hull);*/
-            				  convexHull(approx, approx, CV_CLOCKWISE, true);
-            			  }
-            			  /*
-            			  check the case:
-            			     +++++++++++++++++++++++
-            			    +                  +
-            			   +               +
-            			   +           +
-            			   +++++++++
-            			   */
-            			  Mat tmpImg = Mat::zeros(pipeline_data->thresholds[0].size(), pipeline_data->thresholds[0].type());
-            			  RotatedRect rect  = minAreaRect(approx);//not contour[c]
-						  Point2f pointsFloat[4];
-						  rect.points(pointsFloat);
-						  vector<Point> rectPoint;
-						  for (int h = 0; h < 4; h++) {
-							  rectPoint.push_back(Point(floor(pointsFloat[h].x), floor(pointsFloat[h].y)));
-						  }
+              if (this->config->debugCharSegmenter) {
+                cout << "CHARACTERSEGMENTER remove(1) threshold 0 ";
+                if (mr.height < MIN_CONTOUR_HEIGHT) {
+                  cout << "SHORT ";
+                }
+                if (mr.width < MIN_CONTOUR_WIDTH) {
+                  cout << "TIGHT ";
+                }
+                if (ctArea < MIN_CHAR_AREA) {
+                  cout << "SMALL ";
+                }
+                cout << "contour[" << c << "] height=" << mr.height << " (min=" << MIN_CONTOUR_HEIGHT << "), width=" << mr.width
+                << " (min=" << MIN_CONTOUR_WIDTH << "), ctArea=" << ctArea << " (min=" << MIN_CHAR_AREA << ")" << endl;
+              }
+            } else if (mr.width > MIN_PLATE_WIDTH && mr.height > MIN_PLATE_HEIGHT) {
+                  if (contourArea(contours[c],true) > 0) {// > 0 inner
+                    vector<Point> approx;
+                    double perimeter = arcLength(contours[c], true);
+                    Mat img = Mat(contours[c]);
+                    approxPolyDP(img, approx, perimeter * 0.05, true);
+                    if (approx.size() >= 4) {
+                      if (!isContourConvex(approx)) {
+                        /*vector<Point> hull;
+                        convexHull(approx, hull, CV_CLOCKWISE, true);
+                        contours_poly.push_back(hull);*/
+                        vector<Point> hull;
+                        convexHull(approx, hull, CV_CLOCKWISE, true);
+                        approx.clear();
+                        for (int z = 0; z < hull.size(); z++) {
+                          approx.push_back(hull[z]);
+                        }
+                      }
+                      /*
+                      check the case:
+                         +++++++++++++++++++++++
+                        +                  +
+                       +               +
+                       +           +
+                       +++++++++
+                       */
+                      Mat tmpImg = Mat::zeros(pipeline_data->thresholds[0].size(), pipeline_data->thresholds[0].type());
+                      RotatedRect rect  = minAreaRect(approx);//not contour[c]
+                      Point2f pointsFloat[4];
+                      rect.points(pointsFloat);
+                      vector<Point> rectPoint;
+                      for (int h = 0; h < 4; h++) {
+                        rectPoint.push_back(Point(floor(pointsFloat[h].x), floor(pointsFloat[h].y)));
+                      }
 
-						  //find "diff" areas
-						  fillConvexPoly(tmpImg, rectPoint, Scalar(255, 255, 255));
-						  fillConvexPoly(tmpImg, approx, Scalar(0, 0, 0));
+                      //find "diff" areas
+                      fillConvexPoly(tmpImg, rectPoint, Scalar(255, 255, 255));
+                      fillConvexPoly(tmpImg, approx, Scalar(0, 0, 0));
 
-						  Mat tempFindImg(pipeline_data->thresholds[0].size(), CV_8U);
-						  tmpImg.copyTo(tempFindImg);
+                      Mat tempFindImg(pipeline_data->thresholds[0].size(), CV_8U);
+                      tmpImg.copyTo(tempFindImg);
 
-						  vector<vector<Point> > tmpContours;
-						  vector<Vec4i> tmpHierarchy;
-						  findContours(tempFindImg, tmpContours, tmpHierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE);
+                      vector<vector<Point> > tmpContours;
+                      vector<Vec4i> tmpHierarchy;
+                      findContours(tempFindImg, tmpContours, tmpHierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE);
 
-						  float rectArea= contourArea(rectPoint);
+                      float rectArea= contourArea(rectPoint);
 
-						  if (this->config->debugCharSegmenter) {
-								Mat debugImg = Mat::zeros(tmpImg.size(), tmpImg.type());
-								tmpImg.copyTo(debugImg);
-								cvtColor(debugImg, debugImg, CV_GRAY2BGR);
-								//fillPoly(tmpImg, contours_poly, Scalar(150, 100, 50));
-								for (unsigned int z = 0; z < tmpContours.size(); z++) {
-									drawContours(debugImg, tmpContours, z, Scalar(0, 0, 255), 2);
-								}
-								displayImage(config, "Remove small contours: approx&rect", debugImg);
-								cout << "CHARACTERSEGMENTER approx=" << approx << endl;
-							}
+                      if (this->config->debugCharSegmenter) {
+                        Mat debugImg = Mat::zeros(tmpImg.size(), tmpImg.type());
+                        tmpImg.copyTo(debugImg);
+                        cvtColor(debugImg, debugImg, CV_GRAY2BGR);
+                        //fillPoly(tmpImg, contours_poly, Scalar(150, 100, 50));
+                        for (int z = 0; z < tmpContours.size(); z++) {
+                          drawContours(debugImg, tmpContours, z, Scalar(0, 0, 255), 2);
+                        }
+                        displayImage(config, "Remove small contours: approx&rect", debugImg);
+                        cout << "CHARACTERSEGMENTER approx=" << approx << endl;
+                      }
 
-						  //vector<vector<Point>> bigContours;
-						  bool performConvexHull = false;
-						  for (int h = 0; h < tmpContours.size(); h++)
-							{
-							  if (tmpContours[h].size() == 0)
-								continue;
-							  float tmpArea= contourArea(tmpContours[h]);
-							  if (this->config->debugCharSegmenter) {
-								  cout << "CHARACTERSEGMENTER rectArea=" << rectArea << ", rectArea*0.125=" << (rectArea*0.125) << ", tmpArea=" << tmpArea << endl;
-							  }
+                      //vector<vector<Point>> bigContours;
+                      bool performConvexHull = false;
+                      for (int h = 0; h < tmpContours.size(); h++)
+                      {
+                        if (tmpContours[h].size() == 0)
+                        continue;
+                        float tmpArea= contourArea(tmpContours[h]);
+                        if (this->config->debugCharSegmenter) {
+                          cout << "CHARACTERSEGMENTER rectArea=" << rectArea << ", rectArea*0.125=" << (rectArea*0.125) << ", tmpArea=" << tmpArea << endl;
+                        }
 
-							  if (tmpArea > rectArea*0.125) {
-								  //bigContours.push_back(tmpContours[h]);
-								  approx.insert(approx.end(), tmpContours[h].begin(), tmpContours[h].end());
-								  performConvexHull = true;
-							  }
+                        if (tmpArea > rectArea*0.125) {
+                          //bigContours.push_back(tmpContours[h]);
+                          approx.insert(approx.end(), tmpContours[h].begin(), tmpContours[h].end());
+                          performConvexHull = true;
+                        }
 
-							}
-						  if (performConvexHull) {
-							  convexHull(approx, approx, CV_CLOCKWISE, true);
-							  if (this->config->debugCharSegmenter) {
-									Mat debugImg = Mat::zeros(tmpImg.size(), tmpImg.type());
-									tmpImg.copyTo(debugImg);
-									cvtColor(debugImg, debugImg, CV_GRAY2BGR);
-									for (int t = 0; t < approx.size() - 1; t++) {
-										line(debugImg, approx[t], approx[t+1], Scalar(255, 0, 0), 3, CV_AA);
-									}
-									line(debugImg, approx[0], approx[approx.size() - 1], Scalar(255, 0, 0), 3, CV_AA);
-									displayImage(config, "Remove small contours: approx", debugImg);
+                      }
+                      if (performConvexHull) {
+                        //convexHull(approx, approx, CV_CLOCKWISE, true);
+                         vector<Point> hull;
+                         convexHull(approx, hull, CV_CLOCKWISE, true);
+                         approx.clear();
+                         for (int z = 0; z < hull.size(); z++) {
+                           approx.push_back(hull[z]);
+                         }
+                        if (this->config->debugCharSegmenter) {
+                          Mat debugImg = Mat::zeros(tmpImg.size(), tmpImg.type());
+                          tmpImg.copyTo(debugImg);
+                          cvtColor(debugImg, debugImg, CV_GRAY2BGR);
+                          for (int t = 0; t < approx.size() - 1; t++) {
+                            line(debugImg, approx[t], approx[t+1], Scalar(255, 0, 0), 3, CV_AA);
+                          }
+                          line(debugImg, approx[0], approx[approx.size() - 1], Scalar(255, 0, 0), 3, CV_AA);
+                          displayImage(config, "Remove small contours: approx", debugImg);
 
-								}
-						  }
+                        }
+                      }
 
-            			  contours_poly.push_back(approx);
+                            contours_poly.push_back(approx);
 
-						  if (this->config->debugCharSegmenter)
-								cout << "CHARACTERSEGMENTER collect(1) threshold 0 WIDE contour[" << c << "] height=" << mr.height << " (MIN_PLATE_HEIGHT=" << MIN_PLATE_HEIGHT << "), width=" << mr.width
-									 << " (MIN_PLATE_WIDTH=" << MIN_PLATE_WIDTH << ")" << endl;
-            		  } else {
-            			  RotatedRect rect  = minAreaRect(contours[c]);
-            			  Point2f pointsFloat[4];
-            			  rect.points(pointsFloat);
-            			  vector<Point> rectPoint;
-            			  for (int h = 0; h < 4; h++) {
-            				  rectPoint.push_back(Point(floor(pointsFloat[h].x), floor(pointsFloat[h].y)));
-            			  }
-            			  contours_poly.push_back(rectPoint);
-            			  if (this->config->debugCharSegmenter)
-            				  cout << "CHARACTERSEGMENTER collect_minAreaRect(1) threshold 0 WIDE contour[" << c << "] height=" << mr.height << " (MIN_PLATE_HEIGHT=" << MIN_PLATE_HEIGHT << "), width=" << mr.width
-            				  								 << " (MIN_PLATE_WIDTH=" << MIN_PLATE_WIDTH << "), approxPolyDP.size()=" << approx.size() << endl;
+                      if (this->config->debugCharSegmenter)
+                        cout << "CHARACTERSEGMENTER collect(1) threshold 0 WIDE contour[" << c << "] height=" << mr.height << " (MIN_PLATE_HEIGHT=" << MIN_PLATE_HEIGHT << "), width=" << mr.width
+                           << " (MIN_PLATE_WIDTH=" << MIN_PLATE_WIDTH << ")" << endl;
+                    } else {
+                      RotatedRect rect  = minAreaRect(contours[c]);
+                      Point2f pointsFloat[4];
+                      rect.points(pointsFloat);
+                      vector<Point> rectPoint;
+                      for (int h = 0; h < 4; h++) {
+                        rectPoint.push_back(Point(floor(pointsFloat[h].x), floor(pointsFloat[h].y)));
+                      }
+                      contours_poly.push_back(rectPoint);
+                      if (this->config->debugCharSegmenter)
+                        cout << "CHARACTERSEGMENTER collect_minAreaRect(1) threshold 0 WIDE contour[" << c << "] height=" << mr.height << " (MIN_PLATE_HEIGHT=" << MIN_PLATE_HEIGHT << "), width=" << mr.width
+                                         << " (MIN_PLATE_WIDTH=" << MIN_PLATE_WIDTH << "), approxPolyDP.size()=" << approx.size() << endl;
 
-            		  }
-            		  wideContoursIdx.push_back(c);
-            	  }
+                    }
+                    wideContoursIdx.push_back(c);
+
+                    //calculate for first threshold only
+                    if(mr.width > biggestContourWidth && mr.width > MIN_PLATE_WIDTH && mr.height > MIN_PLATE_HEIGHT)
+                    {
+                      //biggestContourWidth = mr.width;
+                      biggestContourIdx = c;
+                    }
+                  }
+                }
+
+                //calculate for first threshold only
+                /*if(mr.width > biggestContourWidth && mr.width > MIN_PLATE_WIDTH && mr.height > MIN_PLATE_HEIGHT)
+                {
+                  //biggestContourWidth = mr.width;
+                  biggestContourIdx = c;
+                }*/
+
               }
 
-    		  //calculate for first threshold only
-    		  if(mr.width > biggestContourWidth && mr.width > MIN_PLATE_WIDTH && mr.height > MIN_PLATE_HEIGHT)
-    		  {
-    			  //biggestContourWidth = mr.width;
-    			  biggestContourIdx = c;
-    		  }
-          }
-          if (contours_poly.size() > 0) {
-			Mat tmpImg = Mat::zeros(pipeline_data->thresholds[0].size(), pipeline_data->thresholds[0].type());
-			//fillPoly(tmpImg, contours_poly, Scalar(255, 255, 255));
-			for (int h = 0; h < contours_poly.size(); h++) {
-				fillConvexPoly(tmpImg, contours_poly[h], Scalar(255, 255, 255));
-			}
-			bitwise_and(hvFilterImg, tmpImg, hvFilterImg);
+              if (contours_poly.size() > 0) {
+                Mat tmpImg = Mat::zeros(pipeline_data->thresholds[0].size(), pipeline_data->thresholds[0].type());
+                //fillPoly(tmpImg, contours_poly, Scalar(255, 255, 255));
+                for (int h = 0; h < contours_poly.size(); h++) {
+                  fillConvexPoly(tmpImg, contours_poly[h], Scalar(255, 255, 255));
+                }
+                bitwise_and(hvFilterImg, tmpImg, hvFilterImg);
 
-			if (this->config->debugCharSegmenter) {
-				Mat debugImg = Mat::zeros(pipeline_data->thresholds[0].size(), pipeline_data->thresholds[0].type());
-				pipeline_data->thresholds[0].copyTo(debugImg);
-				cvtColor(debugImg, debugImg, CV_GRAY2BGR);
-				//fillPoly(tmpImg, contours_poly, Scalar(150, 100, 50));
-				drawContours(debugImg, contours_poly, 0, Scalar(0, 0, 255), 2);
+                if (this->config->debugCharSegmenter) {
+                  Mat debugImg = Mat::zeros(pipeline_data->thresholds[0].size(), pipeline_data->thresholds[0].type());
+                  pipeline_data->thresholds[0].copyTo(debugImg);
+                  cvtColor(debugImg, debugImg, CV_GRAY2BGR);
+                  //fillPoly(tmpImg, contours_poly, Scalar(150, 100, 50));
+                  drawContours(debugImg, contours_poly, 0, Scalar(0, 0, 255), 2);
 
-				for (unsigned int j = 0; j < wideContoursIdx.size(); j++)
-				  {
-					  drawContours(debugImg, contours, wideContoursIdx[j], cv::Scalar(0,255,0), 1);
-				  }
+                  for (unsigned int j = 0; j < wideContoursIdx.size(); j++)
+                    {
+                      drawContours(debugImg, contours, wideContoursIdx[j], cv::Scalar(0,255,0), 1);
+                    }
 
-				displayImage(config, "Remove small contours: fillPoly", debugImg);
+                  displayImage(config, "Remove small contours: fillPoly", debugImg);
 
-			}
-		  }
+                }
+              }
 
-          if (this->config->debugCharSegmenter)
-          	displayImage(config, "Remove small contours: hvFilterImg(FINAL)", hvFilterImg);
-          //test3
-    	  Mat blackFilterImg = Mat::zeros(pipeline_data->thresholds[0].size(), pipeline_data->thresholds[0].type());
-    	  Mat blackArea = Mat::zeros(pipeline_data->thresholds[0].size(), pipeline_data->thresholds[0].type());
-    	  Mat elementBA = getStructuringElement(MORPH_RECT,
-    						Size((int)avgCharWidth, (int)avgCharHeight),
-    						Point(-1, -1) );
-    	  bitwise_not(pipeline_data->thresholds[0], blackArea);
-    	  morphologyEx(blackArea, blackArea, MORPH_OPEN, elementBA);
-    	  bitwise_not(blackArea, blackFilterImg);
+              if (this->config->debugCharSegmenter)
+                displayImage(config, "Remove small contours: hvFilterImg(FINAL)", hvFilterImg);
+                //test3
+              Mat blackFilterImg = Mat::zeros(pipeline_data->thresholds[0].size(), pipeline_data->thresholds[0].type());
+              Mat blackArea = Mat::zeros(pipeline_data->thresholds[0].size(), pipeline_data->thresholds[0].type());
+              Mat elementBA = getStructuringElement(MORPH_RECT,
+                      Size((int)avgCharWidth, (int)avgCharHeight),
+                      Point(-1, -1) );
+              bitwise_not(pipeline_data->thresholds[0], blackArea);
+              morphologyEx(blackArea, blackArea, MORPH_OPEN, elementBA);
+              bitwise_not(blackArea, blackFilterImg);
 
-    	  vector< vector <Point> > contoursBA; // Vector for storing contour
-    	  vector< Vec4i > hierarchyBA;
-    //	  int largestContourIdx = 0;
-    //	  int largestArea=0;
+              vector< vector <Point> > contoursBA; // Vector for storing contour
+              vector< Vec4i > hierarchyBA;
+          //	  int largestContourIdx = 0;
+          //	  int largestArea=0;
 
 
-    	  //Mat debugImg(pipeline_data->thresholds[0].size(), pipeline_data->thresholds[0].type());
-    	  Mat tmpImg = Mat::zeros(pipeline_data->thresholds[0].size(), pipeline_data->thresholds[0].type());
+              //Mat debugImg(pipeline_data->thresholds[0].size(), pipeline_data->thresholds[0].type());
+              Mat tmpImg = Mat::zeros(pipeline_data->thresholds[0].size(), pipeline_data->thresholds[0].type());
 
-    	  blackArea.copyTo(tmpImg);
-    	  findContours(tmpImg, contoursBA, hierarchyBA, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE);
+              blackArea.copyTo(tmpImg);
+              findContours(tmpImg, contoursBA, hierarchyBA, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE);
 
-    	  for (unsigned int j = 0; j < contoursBA.size(); j++)
-    	  {
-    		  if (contoursBA[j].size() == 0)
-    			continue;
-    		  Rect mr = boundingRect(contoursBA[j]);
-    		  if (mr.x < 0.5*MIN_PLATE_WIDTH) {
-    			  rectangle(blackFilterImg, Rect(0, 0, mr.x + mr.width, blackFilterImg.rows), Scalar(0, 0, 0), -1);
-    		  } else if (blackFilterImg.cols - (mr.x + mr.width) < 0.5*MIN_PLATE_WIDTH) {
-    			  rectangle(blackFilterImg, Rect(mr.x, 0, blackFilterImg.cols - mr.x, blackFilterImg.rows), Scalar(0, 0, 0), -1);
-    		  } else {
-    			  rectangle(blackFilterImg, Rect(mr.x, 0, mr.width, blackFilterImg.rows), Scalar(0, 0, 0), -1);
-    		  }
-    	  }
+              for (unsigned int j = 0; j < contoursBA.size(); j++)
+              {
+                if (contoursBA[j].size() == 0)
+                continue;
+                Rect mr = boundingRect(contoursBA[j]);
+                if (mr.x < 0.5*MIN_PLATE_WIDTH) {
+                  rectangle(blackFilterImg, Rect(0, 0, mr.x + mr.width, blackFilterImg.rows), Scalar(0, 0, 0), -1);
+                } else if (blackFilterImg.cols - (mr.x + mr.width) < 0.5*MIN_PLATE_WIDTH) {
+                  rectangle(blackFilterImg, Rect(mr.x, 0, blackFilterImg.cols - mr.x, blackFilterImg.rows), Scalar(0, 0, 0), -1);
+                } else {
+                  rectangle(blackFilterImg, Rect(mr.x, 0, mr.width, blackFilterImg.rows), Scalar(0, 0, 0), -1);
+                }
+              }
 
-    	bitwise_and(hvFilterImg, blackFilterImg, resultMask);
+              bitwise_and(hvFilterImg, blackFilterImg, resultMask);
 
-    	  if (this->config->debugCharSegmenter) {
-    		Mat debugImg = Mat::zeros(blackArea.size(), blackArea.type());
-    		blackArea.copyTo(debugImg);
-    		cvtColor(debugImg, debugImg, CV_GRAY2BGR);
+              if (this->config->debugCharSegmenter) {
+                Mat debugImg = Mat::zeros(blackArea.size(), blackArea.type());
+                blackArea.copyTo(debugImg);
+                cvtColor(debugImg, debugImg, CV_GRAY2BGR);
 
-    		for (unsigned int j = 0; j < contoursBA.size(); j++)
-    		  {
-    			  if (contoursBA[j].size() == 0)
-    				continue;
-    			  drawContours(debugImg, contoursBA, j, cv::Scalar(255,0,0), 2);
-    		  }
+                for (unsigned int j = 0; j < contoursBA.size(); j++)
+                  {
+                    if (contoursBA[j].size() == 0)
+                    continue;
+                    drawContours(debugImg, contoursBA, j, cv::Scalar(255,0,0), 2);
+                  }
 
-    		displayImage(config, "Remove small contours: blackArea", debugImg);
-    		displayImage(config, "Remove small contours: blackFilterImg", blackFilterImg);
-    		displayImage(config, "Remove small contours: thresholds[0]", pipeline_data->thresholds[0]);
-    	  }
+                displayImage(config, "Remove small contours: blackArea", debugImg);
+                displayImage(config, "Remove small contours: blackFilterImg", blackFilterImg);
+                displayImage(config, "Remove small contours: thresholds[0]", pipeline_data->thresholds[0]);
+              }
 
 
 
-          Point leftTop = Point(textLine.topLine.p1.x, textLine.topLine.p1.y);
-          Point rightTop = Point(textLine.topLine.p2.x, textLine.topLine.p2.y);
-          Point leftBottom = Point(textLine.bottomLine.p1.x, textLine.bottomLine.p1.y);
-          Point rightBottom = Point(textLine.bottomLine.p2.x, textLine.bottomLine.p2.y);
+              Point leftTop = Point(textLine.topLine.p1.x, textLine.topLine.p1.y);
+              Point rightTop = Point(textLine.topLine.p2.x, textLine.topLine.p2.y);
+              Point leftBottom = Point(textLine.bottomLine.p1.x, textLine.bottomLine.p1.y);
+              Point rightBottom = Point(textLine.bottomLine.p2.x, textLine.bottomLine.p2.y);
 
-          if (biggestContourIdx > -1) {
+              if (biggestContourIdx > -1) {
 
+                RotatedRect plateBoundingBox = minAreaRect(contours[biggestContourIdx]);
 
+                Point2f corners[4];
+                plateBoundingBox.points(corners);
 
-            RotatedRect plateBoundingBox = minAreaRect(contours[biggestContourIdx]);
+                vector<Point> fillContSingle;
+                fillContSingle.push_back(corners[0]);
+                fillContSingle.push_back(corners[1]);
+                fillContSingle.push_back(corners[2]);
+                fillContSingle.push_back(corners[3]);
 
-  		  Point2f corners[4];
-  		  plateBoundingBox.points(corners);
+                vector<vector<Point> > plateContAll;
+                plateContAll.push_back(fillContSingle);
 
-  		  vector<Point> fillContSingle;
-  		  fillContSingle.push_back(corners[0]);
-  		  fillContSingle.push_back(corners[1]);
-  		  fillContSingle.push_back(corners[2]);
-  		  fillContSingle.push_back(corners[3]);
-
-  		  vector<vector<Point> > plateContAll;
-  		  plateContAll.push_back(fillContSingle);
-
-  		  Mat mask = Mat::zeros(pipeline_data->thresholds[0].size(), CV_8UC1);
-  		  fillConvexPoly(mask, fillContSingle, cv::Scalar(255,255,255));
-  		  //fillPoly(mask, plateContAll, cv::Scalar(255,255,255));
-  		  bitwise_and(resultMask, mask, resultMask);
+                Mat mask = Mat::zeros(pipeline_data->thresholds[0].size(), CV_8UC1);
+                fillConvexPoly(mask, fillContSingle, cv::Scalar(255,255,255));
+                //fillPoly(mask, plateContAll, cv::Scalar(255,255,255));
+                bitwise_and(resultMask, mask, resultMask);
 
 
 
 
-        	  Mat maskTextLine = Mat::zeros(pipeline_data->thresholds[0].size(), CV_8UC1);
-        	  //fillConvexPoly(maskTextLine, textLine.linePolygon.data(), textLine.linePolygon.size(), Scalar(255,255,255));
-        	  line(maskTextLine, textLine.topLine.p1, textLine.topLine.p2, cv::Scalar(255,255,255), 2);
+                Mat maskTextLine = Mat::zeros(pipeline_data->thresholds[0].size(), CV_8UC1);
+                //fillConvexPoly(maskTextLine, textLine.linePolygon.data(), textLine.linePolygon.size(), Scalar(255,255,255));
+                line(maskTextLine, textLine.topLine.p1, textLine.topLine.p2, cv::Scalar(255,255,255), 2);
 
-        	  Mat maskContour = Mat::zeros(pipeline_data->thresholds[0].size(), CV_8UC1);
-        	  drawContours(maskContour, contours,biggestContourIdx, cv::Scalar(255,255,255), 1); // with a thickness of 1
-        	  //drawContours(maskContour, contours, biggestContourIdx, Scalar(255, 255, 255), -1, 8, hierarchy, 1);
-        	  Mat lineMask;
-        	  bitwise_and(maskTextLine, maskContour, lineMask);
-        	  vector<Point> locations;   // output, locations of non-zero pixels
+                Mat maskContour = Mat::zeros(pipeline_data->thresholds[0].size(), CV_8UC1);
+                drawContours(maskContour, contours,biggestContourIdx, cv::Scalar(255,255,255), 1); // with a thickness of 1
+                //drawContours(maskContour, contours, biggestContourIdx, Scalar(255, 255, 255), -1, 8, hierarchy, 1);
+                Mat lineMask;
+                bitwise_and(maskTextLine, maskContour, lineMask);
+                vector<Point> locations;   // output, locations of non-zero pixels
 
-        	  unsigned count = cv::countNonZero(lineMask);
-        	  if (count > 0) {
-    			  cv::findNonZero(lineMask, locations);
+                unsigned count = cv::countNonZero(lineMask);
+                if (count > 0) {
+                cv::findNonZero(lineMask, locations);
 
-    			  Point min = Point(0, 0);
-    			  Point max = Point(0, 0);
-    			  //int topSegmentLength = textLine.topLine.p2.x -  textLine.topLine.p1.x;
-    			  for (unsigned int h = 0; h < locations.size(); h++) {
-    				  Point pnt = locations[h];
-    				  if (h == 0) {
-    					  min = Point(pnt.x, pnt.y);
-    					  max = Point(pnt.x, pnt.y);
-    				  } else {
-    					  if (pnt.x < min.x) {
-    						  min = Point(pnt.x, pnt.y);
-    					  }
-    					  if (pnt.x > max.x) {
-    						  max = Point(pnt.x, pnt.y);
-    					  }
-    				  }
+                Point min = Point(0, 0);
+                Point max = Point(0, 0);
+                //int topSegmentLength = textLine.topLine.p2.x -  textLine.topLine.p1.x;
+                for (unsigned int h = 0; h < locations.size(); h++) {
+                  Point pnt = locations[h];
+                  if (h == 0) {
+                    min = Point(pnt.x, pnt.y);
+                    max = Point(pnt.x, pnt.y);
+                  } else {
+                    if (pnt.x < min.x) {
+                      min = Point(pnt.x, pnt.y);
+                    }
+                    if (pnt.x > max.x) {
+                      max = Point(pnt.x, pnt.y);
+                    }
+                  }
 
-    			  }
+                }
 
-    			  if (min.x + 5 != 0 && min.x < pipeline_data->thresholds[0].cols / 2) {
-    				  leftTop = Point(min.x + 5, textLine.topLine.getPointAt(min.x + 5));
-    			  }
-    			  if (max.x - 5 != 0 && max.x > pipeline_data->thresholds[0].cols / 2) {
-    				  rightTop = Point(max.x - 5, textLine.topLine.getPointAt(max.x - 5));
-    			  }
+                if (min.x + 5 != 0 && min.x < pipeline_data->thresholds[0].cols / 2) {
+                  leftTop = Point(min.x + 5, textLine.topLine.getPointAt(min.x + 5));
+                }
+                if (max.x - 5 != 0 && max.x > pipeline_data->thresholds[0].cols / 2) {
+                  rightTop = Point(max.x - 5, textLine.topLine.getPointAt(max.x - 5));
+                }
 
-    			  //cv::Scalar intersectionArea = cv::sum(intersectionMat);
-        	  }
+                //cv::Scalar intersectionArea = cv::sum(intersectionMat);
+                }
 
 
            }
 
           if (biggestContourIdx > -1) {
-    		  Mat maskTextLine = Mat::zeros(pipeline_data->thresholds[0].size(), CV_8UC1);
-    		  line(maskTextLine, textLine.bottomLine.p1, textLine.bottomLine.p2, cv::Scalar(255,255,255), 2);
+            Mat maskTextLine = Mat::zeros(pipeline_data->thresholds[0].size(), CV_8UC1);
+            line(maskTextLine, textLine.bottomLine.p1, textLine.bottomLine.p2, cv::Scalar(255,255,255), 2);
 
-    		  Mat maskContour = Mat::zeros(pipeline_data->thresholds[0].size(), CV_8UC1);
-    		  drawContours(maskContour, contours,biggestContourIdx, cv::Scalar(255,255,255),1); // with a thickness of 1
-    		  //drawContours(maskContour, contours, biggestContourIdx, Scalar(255, 255, 255), -1, 8, hierarchy, 1);
-    		  Mat lineMask;
-    		  bitwise_and(maskTextLine, maskContour, lineMask);
-    		  vector<Point> locations;   // output, locations of non-zero pixels
-    		  unsigned count = cv::countNonZero(lineMask);
-    		  if (count > 0) {
-    			  cv::findNonZero(lineMask, locations);
+            Mat maskContour = Mat::zeros(pipeline_data->thresholds[0].size(), CV_8UC1);
+            drawContours(maskContour, contours,biggestContourIdx, cv::Scalar(255,255,255),1); // with a thickness of 1
+            //drawContours(maskContour, contours, biggestContourIdx, Scalar(255, 255, 255), -1, 8, hierarchy, 1);
+            Mat lineMask;
+            bitwise_and(maskTextLine, maskContour, lineMask);
+            vector<Point> locations;   // output, locations of non-zero pixels
+            unsigned count = cv::countNonZero(lineMask);
+            if (count > 0) {
+              cv::findNonZero(lineMask, locations);
 
-    			  Point min = Point(0, 0);
-    			  Point max = Point(0, 0);
-    			  //int topSegmentLength = textLine.topLine.p2.x -  textLine.topLine.p1.x;
-    			  for (unsigned int h = 0; h < locations.size(); h++) {
-    				  Point pnt = locations[h];
-    				  if (h == 0) {
-    					  min = Point(pnt.x, pnt.y);
-    					  max = Point(pnt.x, pnt.y);
-    				  } else {
-    					  if (pnt.x < min.x) {
-    						  min = Point(pnt.x, pnt.y);
-    					  }
-    					  if (pnt.x > max.x) {
-    						  max = Point(pnt.x, pnt.y);
-    					  }
-    				  }
-    				  if (this->config->debugCharSegmenter)
-    					  cout << "locations[" << h << "]=" << pnt << endl;
+              Point min = Point(0, 0);
+              Point max = Point(0, 0);
+              //int topSegmentLength = textLine.topLine.p2.x -  textLine.topLine.p1.x;
+              for (unsigned int h = 0; h < locations.size(); h++) {
+                Point pnt = locations[h];
+                if (h == 0) {
+                  min = Point(pnt.x, pnt.y);
+                  max = Point(pnt.x, pnt.y);
+                } else {
+                  if (pnt.x < min.x) {
+                    min = Point(pnt.x, pnt.y);
+                  }
+                  if (pnt.x > max.x) {
+                    max = Point(pnt.x, pnt.y);
+                  }
+                }
+                if (this->config->debugCharSegmenter)
+                  cout << "locations[" << h << "]=" << pnt << endl;
 
-    			  }
+              }
 
-    			  if (min.x + 5 != 0 && min.x < pipeline_data->thresholds[0].cols / 2) {
-    				  leftBottom = Point(min.x + 5, textLine.bottomLine.getPointAt(min.x + 5));
-    			  }
-    			  if (max.x - 5 != 0 && max.x > pipeline_data->thresholds[0].cols / 2) {
-    				  rightBottom = Point(max.x - 5, textLine.bottomLine.getPointAt(max.x - 5));
-    			  }
+              if (min.x + 5 != 0 && min.x < pipeline_data->thresholds[0].cols / 2) {
+                leftBottom = Point(min.x + 5, textLine.bottomLine.getPointAt(min.x + 5));
+              }
+              if (max.x - 5 != 0 && max.x > pipeline_data->thresholds[0].cols / 2) {
+                rightBottom = Point(max.x - 5, textLine.bottomLine.getPointAt(max.x - 5));
+              }
 
-    			  //cv::Scalar intersectionArea = cv::sum(intersectionMat);
-    			  }
+              //cv::Scalar intersectionArea = cv::sum(intersectionMat);
+              }
 
 
-    		 }
+           }
 
           line(resultMask, leftTop, rightTop, cv::Scalar(0,0,0));
           line(resultMask, leftBottom, rightBottom, cv::Scalar(0,0,0));
@@ -1128,106 +1146,102 @@ namespace alpr
           	cout << "leftTop=" << leftTop << ", rightTop=" << rightTop << ", leftBottom=" << leftBottom << ", rightBottom=" << rightBottom << endl;
           }
 
-                //if (biggestContourIdx > -1) {
-
-                	if (this->config->debugCharSegmenter)
-    				  {
-                		Mat dbgImage(pipeline_data->thresholds[0].size(), CV_8U);
-                		pipeline_data->thresholds[0].copyTo(dbgImage);
-    				    cvtColor(dbgImage, dbgImage, CV_GRAY2RGB);
-    				    //line(dbgImage, left, right, cv::Scalar(0,255,0));
-    				    //drawContours(dbgImage, contours, biggestContourIdx, Scalar(255,105,180), 3);
-
-    				    line(dbgImage, leftTop, rightTop, cv::Scalar(0,255,0));
-    				    line(dbgImage, leftBottom, rightBottom, cv::Scalar(0,255,0));
-
-    				    //line(dbgImage, textLine.bottomLine.p1, textLine.bottomLine.p2, cv::Scalar(0,255,0), 2);
-    				    //line(dbgImage, textLine.topLine.p1, textLine.topLine.p2, cv::Scalar(0,255,0), 2);
-
-    				    //drawContours(dbgImage, contours, biggestContourIdx, Scalar(255,105,180), -1, 8, hierarchy, 1);
-    				    if (biggestContourIdx > -1) {
-    				    	drawContours(dbgImage, contours, biggestContourIdx, Scalar(255,0,0), 1);
-    				    }
-    					displayImage(config, "Remove small contours: with top/bottom lines", dbgImage);
-    					displayImage(config, "Remove small contours (RESULT filter): with top/bottom lines", resultMask);
-    				  }
-                //}
-
-
-      for (unsigned int i = 0; i < pipeline_data->thresholds.size(); i++)
+          if (this->config->debugCharSegmenter)
           {
+            Mat dbgImage(pipeline_data->thresholds[0].size(), CV_8U);
+            pipeline_data->thresholds[0].copyTo(dbgImage);
+            cvtColor(dbgImage, dbgImage, CV_GRAY2RGB);
+            //line(dbgImage, left, right, cv::Scalar(0,255,0));
+            //drawContours(dbgImage, contours, biggestContourIdx, Scalar(255,105,180), 3);
 
-        	vector<vector<Point> > contours;
-    		vector<Vec4i> hierarchy;
+            line(dbgImage, leftTop, rightTop, cv::Scalar(0,255,0));
+            line(dbgImage, leftBottom, rightBottom, cv::Scalar(0,255,0));
 
-    		//line(pipeline_data->thresholds[i], leftTop, rightTop, cv::Scalar(0,0,0));
-    		//line(pipeline_data->thresholds[i], leftBottom, rightBottom, cv::Scalar(0,0,0));
+            //line(dbgImage, textLine.bottomLine.p1, textLine.bottomLine.p2, cv::Scalar(0,255,0), 2);
+            //line(dbgImage, textLine.topLine.p1, textLine.topLine.p2, cv::Scalar(0,255,0), 2);
 
-    		bitwise_and(pipeline_data->thresholds[i], resultMask, pipeline_data->thresholds[i]);
-
-    		Mat tempThreshold(pipeline_data->thresholds[i].size(), CV_8U);
-    		pipeline_data->thresholds[i].copyTo(tempThreshold);
-    		findContours(tempThreshold, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE);//todo test CV_CHAIN_APPROX_NONE
-
-
-    		bool first = true;
-          for (unsigned int c = 0; c < contours.size(); c++)
-          {
-            if (contours[c].size() == 0)
-              continue;
-
-            Rect mr = boundingRect(contours[c]);
-            float ctArea= contourArea(contours[c]);
-
-            if (mr.width > MAX_CONTOUR_WIDTH /*|| mr.height > MAX_CONTOUR_HEIGHT*/ //todo sol
-            		|| mr.height < MIN_CONTOUR_HEIGHT || mr.width < MIN_CONTOUR_WIDTH || ctArea < MIN_CHAR_AREA)
-            {
-              // Erase it
-              if (mr.width > MAX_CONTOUR_WIDTH && contourArea(contours[c], true) < 0) { // < 0 - outer
-    //        	  int childIndex = hierarchy[c][2];
-    //        	  if (childIndex != -1) {
-    //        		  drawContours(pipeline_data->thresholds[i], contours, childIndex, Scalar(255, 255, 255));
-              	drawContours(pipeline_data->thresholds[i], contours, c, Scalar(0, 0, 0), -1, 8, hierarchy, 1);
-
-              } else {
-            	  drawContours(pipeline_data->thresholds[i], contours, c, Scalar(0, 0, 0), -1, 8, hierarchy, 1);
-              }
-              if (this->config->debugCharSegmenter) {
-            	  cout << "CHARACTERSEGMENTER remove(2) ";
-            	  if (mr.width > MAX_CONTOUR_WIDTH) {
-            		  cout << "WIDE ";
-            	  }
-            	  if (mr.height < MIN_CONTOUR_HEIGHT) {
-    				  cout << "SHORT ";
-    			  }
-            	  if (mr.width < MIN_CONTOUR_WIDTH) {
-    				  cout << "TIGHT ";
-    			  }
-            	  if (ctArea < MIN_CHAR_AREA) {
-    				  cout << "SMALL ";
-    			  }
-                  cout << " contours[" << c << "] in threshold " << i << " -- height=" << mr.height << " (min=" << MIN_CONTOUR_HEIGHT << "), width=" << mr.width
-    			  << " (min=" << MIN_CONTOUR_WIDTH << ", max=" << MAX_CONTOUR_WIDTH << "), ctArea=" << ctArea << " (min=" << MIN_CHAR_AREA << ")" << endl;
-              }
+            //drawContours(dbgImage, contours, biggestContourIdx, Scalar(255,105,180), -1, 8, hierarchy, 1);
+            if (biggestContourIdx > -1) {
+              drawContours(dbgImage, contours, biggestContourIdx, Scalar(255,0,0), 1);
             }
-
+            displayImage(config, "Remove small contours: with top/bottom lines", dbgImage);
+            displayImage(config, "Remove small contours (RESULT filter): with top/bottom lines", resultMask);
           }
 
+          for (unsigned int i = 0; i < pipeline_data->thresholds.size(); i++)
+          {
 
-    //      for (unsigned int i = 0; i < contours.size(); i++)
-    //	  {
-    //		if (bestContours.goodIndices[i] == false)
-    //		  continue;
-    //
-    //		for (unsigned int z = 0; z < bestContours.contours[i].size(); z++)
-    //		{
-    //		  if (bestContours.contours[i][z].x < leftX)
-    //			leftX = bestContours.contours[i][z].x;
-    //		  if (bestContours.contours[i][z].x > rightX)
-    //			rightX = bestContours.contours[i][z].x;
-    //		}
-    //	  }
-        }
+            vector<vector<Point> > contours;
+            vector<Vec4i> hierarchy;
+
+            //line(pipeline_data->thresholds[i], leftTop, rightTop, cv::Scalar(0,0,0));
+            //line(pipeline_data->thresholds[i], leftBottom, rightBottom, cv::Scalar(0,0,0));
+
+            bitwise_and(pipeline_data->thresholds[i], resultMask, pipeline_data->thresholds[i]);
+
+            Mat tempThreshold(pipeline_data->thresholds[i].size(), CV_8U);
+            pipeline_data->thresholds[i].copyTo(tempThreshold);
+            findContours(tempThreshold, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE);//todo test CV_CHAIN_APPROX_NONE
+
+
+            bool first = true;
+            for (unsigned int c = 0; c < contours.size(); c++)
+            {
+              if (contours[c].size() == 0)
+                continue;
+
+              Rect mr = boundingRect(contours[c]);
+              float ctArea= contourArea(contours[c]);
+
+              if (mr.width > MAX_CONTOUR_WIDTH /*|| mr.height > MAX_CONTOUR_HEIGHT*/ //todo sol
+                  || mr.height < MIN_CONTOUR_HEIGHT || mr.width < MIN_CONTOUR_WIDTH || ctArea < MIN_CHAR_AREA)
+              {
+                // Erase it
+                if (mr.width > MAX_CONTOUR_WIDTH && contourArea(contours[c], true) < 0) { // < 0 - outer
+      //        	  int childIndex = hierarchy[c][2];
+      //        	  if (childIndex != -1) {
+      //        		  drawContours(pipeline_data->thresholds[i], contours, childIndex, Scalar(255, 255, 255));
+                  drawContours(pipeline_data->thresholds[i], contours, c, Scalar(0, 0, 0), -1, 8, hierarchy, 1);
+
+                } else {
+                  drawContours(pipeline_data->thresholds[i], contours, c, Scalar(0, 0, 0), -1, 8, hierarchy, 1);
+                }
+                if (this->config->debugCharSegmenter) {
+                  cout << "CHARACTERSEGMENTER remove(2) ";
+                  if (mr.width > MAX_CONTOUR_WIDTH) {
+                    cout << "WIDE ";
+                  }
+                  if (mr.height < MIN_CONTOUR_HEIGHT) {
+                cout << "SHORT ";
+              }
+                  if (mr.width < MIN_CONTOUR_WIDTH) {
+                cout << "TIGHT ";
+              }
+                  if (ctArea < MIN_CHAR_AREA) {
+                cout << "SMALL ";
+              }
+                    cout << " contours[" << c << "] in threshold " << i << " -- height=" << mr.height << " (min=" << MIN_CONTOUR_HEIGHT << "), width=" << mr.width
+              << " (min=" << MIN_CONTOUR_WIDTH << ", max=" << MAX_CONTOUR_WIDTH << "), ctArea=" << ctArea << " (min=" << MIN_CHAR_AREA << ")" << endl;
+                }
+              }
+
+            }
+
+
+        //      for (unsigned int i = 0; i < contours.size(); i++)
+        //	  {
+        //		if (bestContours.goodIndices[i] == false)
+        //		  continue;
+        //
+        //		for (unsigned int z = 0; z < bestContours.contours[i].size(); z++)
+        //		{
+        //		  if (bestContours.contours[i][z].x < leftX)
+        //			leftX = bestContours.contours[i][z].x;
+        //		  if (bestContours.contours[i][z].x > rightX)
+        //			rightX = bestContours.contours[i][z].x;
+        //		}
+        //	  }
+          }
           displayImage(config, "Remove small contours(FINAL): thresholds[0]", pipeline_data->thresholds[0]);
 
       }

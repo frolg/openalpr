@@ -115,8 +115,8 @@ namespace alpr
 	  return first.overall_confidence > second.overall_confidence;
 	}
 
-  bool compareAlprPlateResults(const AlprPlateResult &first, const AlprPlateResult &second)
-  	{
+ bool compareAlprPlateResults(const AlprPlateResult &first, const AlprPlateResult &second)
+ {
 	  float firstMaxOverallConfidence = -1;
 	  for (int k = 0; k < first.topNPlates.size(); k++) {
 		  if (k == 0 || (first.topNPlates[k].overall_confidence > firstMaxOverallConfidence)) {
@@ -132,7 +132,7 @@ namespace alpr
 	  }
 
 	  return firstMaxOverallConfidence > secondMaxOverallConfidence;
-  	}
+  }
 
   AlprFullDetails ResultAggregator::getAggregateResults()
   {
@@ -191,46 +191,6 @@ namespace alpr
 
         response.results.plates.push_back(clusters[i][best_index]);
       }
-    } else if (merge_strategy == MERGE_ON_MATCH_TEMPLATE) {
-
-//    	if (letters[i].size() > 0)
-//    	        std::stable_sort(letters[i].begin(), letters[i].end(), letterCompare);
-//
-//    	 std::sort(tempTextLines.begin(), tempTextLines.end(), sort_text_line);
-//
-//
-//    	 std::sort(contours.begin(), contours.end(),
-//				[](const vector<Point>& contour1, const vector<Point>& contour2){
-//					Rect ra(boundingRect(contour1));
-//					  Rect rb(boundingRect(contour2));
-//					  return (ra.x < rb.x);
-//				});
-
-    	vector<AlprPlate> matchesTemplatePlates;
-    	vector<AlprPlate> notMatchesTemplatePlates;
-    	for (unsigned int i = 0; i < clusters.size(); i++)//for each country
-		  {
-			for (unsigned int k = 0; k < clusters[i].size(); k++)//for each detected plate
-			{
-				for (unsigned int m = 0; m < clusters[i][k].topNPlates.size(); m++) {
-					if (clusters[i][k].topNPlates[m].matches_template) {
-						matchesTemplatePlates.push_back(clusters[i][k].topNPlates[m]);
-					} else {
-						notMatchesTemplatePlates.push_back(clusters[i][k].topNPlates[m]);
-					}
-				}
-			}
-		  }
-    	std::sort(matchesTemplatePlates.begin(), matchesTemplatePlates.end(), plateCompareByConfidence);
-    	std::sort(notMatchesTemplatePlates.begin(), notMatchesTemplatePlates.end(), plateCompareByConfidence);
-
-//    	for (unsigned int i = 0; i < matchesTemplatePlates.size(); i++) {
-//    		response.results.plates.push_back(matchesTemplatePlates[i]);
-//    	}
-//    	for (unsigned int i = 0; i < notMatchesTemplatePlates.size(); i++) {
-//			response.results.plates.push_back(notMatchesTemplatePlates[i]);
-//		}
-
     } else if (merge_strategy == MERGE_COMBINE)
     {
       // Each cluster is the same plate, just analyzed from a slightly different 
@@ -256,10 +216,10 @@ namespace alpr
             
             if (plateCandidate.overall_confidence < MIN_CONFIDENCE) {
             	if (config->debugGeneral)
-            	          cout << "Result Aggregator:: skip one of cluster plateCandidates: cluster[" << unique_plate_idx
-						  << "], plate[" << i << "], topNPlates[" << j << "]=" << plateCandidate.characters
-						  << ", overall_confidence=" << ", plateCandidate.overall_confidence=" << plateCandidate.overall_confidence
-						  << ", MIN_CONFIDENCE=" << MIN_CONFIDENCE << endl;
+            	      cout << "Result Aggregator:: skip one of cluster plateCandidates: cluster[" << unique_plate_idx
+                    << "], plate[" << i << "], topNPlates[" << j << "]=" << plateCandidate.characters
+                    << ", overall_confidence=" << ", plateCandidate.overall_confidence=" << plateCandidate.overall_confidence
+                    << ", MIN_CONFIDENCE=" << MIN_CONFIDENCE << endl;
             	continue;
             }
 
@@ -361,7 +321,7 @@ namespace alpr
 
           for (int i = 0; i < firstResult.thresholdOcrLines.size(); i++) {
         	  copyResult.thresholdOcrLines.push_back(firstResult.thresholdOcrLines[i]);
-			}
+			    }
 
           response.results.plates.push_back(copyResult);
         }
@@ -392,7 +352,7 @@ namespace alpr
       //plate.bestPlate - either the first entry, or the first entry with a postprocessor template match
       if (plate.bestPlate.overall_confidence < MIN_REGION_CONFIDENCE ) {
     	  if (config->debugGeneral)
-			  cout << "Result Aggregator:: skip entire cluster due of low overall_confidence of the bestPlate. bestPlate: plate["
+			      cout << "Result Aggregator:: skip entire cluster due of low overall_confidence of the bestPlate. bestPlate: plate["
 			  	  << i << "], plate.bestPlate.characters="
 			  	  << plate.bestPlate.characters << ", plate.bestPlate.overall_confidence=" << plate.bestPlate.overall_confidence
 			  	  << ", MIN_REGION_CONFIDENCE=" << MIN_REGION_CONFIDENCE << endl;

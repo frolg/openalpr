@@ -70,13 +70,13 @@ namespace alpr
     if (frame.channels() > 2)
     {
     	if (config->debugDetector)
-    	              cout << "DETECTOR: frame.channels() > 2" << endl;
+    	  cout << "DETECTOR: frame.channels() > 2" << endl;
       cvtColor( frame, frame_gray, CV_BGR2GRAY );
     }
     else
     {
     	if (config->debugDetector)
-    	    	              cout << "DETECTOR: frame.channels() <= 2" << endl;
+    	  cout << "DETECTOR: frame.channels() <= 2" << endl;
       frame.copyTo(frame_gray);
     }
 
