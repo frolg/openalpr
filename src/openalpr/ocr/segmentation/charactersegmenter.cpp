@@ -66,9 +66,9 @@ namespace alpr
     {
       //orig
       //todo TEST1
-      float avgCharHeight = pipeline_data->textLines[lineidx].lineHeight;
+      //float avgCharHeight = pipeline_data->textLines[lineidx].lineHeight;
       float height_to_width_ratio = pipeline_data->config->charHeightMM[lineidx] / pipeline_data->config->charWidthMM[lineidx];
-      float avgCharWidth = avgCharHeight / height_to_width_ratio;
+      //float avgCharWidth = avgCharHeight / height_to_width_ratio;
       int sumWidth = 0;
       int sumHeight = 0;
       int cntGood = 0;
@@ -83,8 +83,8 @@ namespace alpr
       }
 
       //140+3
-      //float avgCharWidth = sumWidth / cntGood;
-      //float avgCharHeight = min((float)sumHeight / cntGood, pipeline_data->textLines[lineidx].lineHeight);
+      float avgCharWidth = sumWidth / cntGood;
+      float avgCharHeight = min((float)sumHeight / cntGood, pipeline_data->textLines[lineidx].lineHeight);
 
       if (config->debugCharSegmenter)
       {
